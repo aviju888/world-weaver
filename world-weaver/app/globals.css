@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --primary: #10b981;
+  --primary-dark: #059669;
+  --primary-light: #d1fae5;
+  --accent: #000000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Modern elements */
+.modern-card {
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.modern-button {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Logo styling */
+.logo-text {
+  color: white;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 
+    -6px -6px 0 #000,  
+    6px -6px 0 #000,
+    -6px 6px 0 #000,
+    6px 6px 0 #000,
+    0 -6px 0 #000,
+    0 6px 0 #000,
+    -6px 0 0 #000,
+    6px 0 0 #000,
+    3px 3px 0 #000,
+    -3px 3px 0 #000,
+    3px -3px 0 #000,
+    -3px -3px 0 #000;
+}
+
+/* Header logo styling */
+.header-logo {
+  color: white;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 
+    -3px -3px 0 #000,  
+    3px -3px 0 #000,
+    -3px 3px 0 #000,
+    3px 3px 0 #000,
+    0 -3px 0 #000,
+    0 3px 0 #000,
+    -3px 0 0 #000,
+    3px 0 0 #000;
+}
+
+/* Section title styling */
+.section-title {
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 
+    -3px -3px 0 #000,
+    3px -3px 0 #000,
+    -3px 3px 0 #000,
+    3px 3px 0 #000,
+    0 -3px 0 #000,
+    0 3px 0 #000,
+    -3px 0 0 #000,
+    3px 0 0 #000,
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+  position: relative;
+  display: block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* Square button styling */
+.square-button {
+  border-radius: 0.5rem !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
