@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import EditorModal from './EditorModal';
+import { RotateCcw } from 'lucide-react';
 
 type AssetType = 'NPC' | 'Location' | 'Item';
 
@@ -129,6 +130,61 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
+  const handleSave = () => {
+    if (!name.trim()) {
+      alert("Please enter a name before saving.");
+      return false;
+    }
+
+    const npcData = {
+      name,
+      cards: cards.map(({ id, image, text, title }) => ({
+        id,
+        image,
+        text,
+        title,
+      })),
+    };
+
+    const localDataRaw = localStorage.getItem('worldData');
+    const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+
+    if (!localData[worldName]) {
+      localData[worldName] = {};
+    }
+    if (!localData[worldName]['asset-npc']) {
+      localData[worldName]['asset-npc'] = {};
+    }
+
+    localData[worldName]['asset-npc'][name] = npcData;
+
+    localStorage.setItem('worldData', JSON.stringify(localData));
+    alert(`NPC "${name}" saved to world "${worldName}"`);
+    return true;
+  };
+
+  const handleGenerateName = async () => {
+    try {
+      const res = await fetch('https://noggin.rea.gent/extreme-platypus-7812', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer rg_v1_vd6h7paoao9tc01r1jzlz0mklyjzajvoc20g_ngk',
+        },
+        body: JSON.stringify({
+          asset_type: activeTab,
+        }),
+      });
+
+      const generatedName = await res.text();
+      setName(generatedName.trim());
+    } catch (error) {
+      console.error('Failed to generate name:', error);
+      alert('Failed to generate name. Please try again.');
+    }
+  };
+
+
   const attributeOptions = [
     'Race & Species',
     'Background',
@@ -146,7 +202,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor">
+    <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor" onSave={handleSave}>
       <div className="flex flex-col space-y-6">
         <div className="text-gray-700 text-sm font-medium">
           {worldName || "Your World"}
@@ -178,15 +234,24 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
           </ul>
         </div>
 
-        <div >
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            placeholder="Enter a unique asset name"
-          />
+          <div className="flex">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="flex-1 p-2 border border-gray-300 rounded-l-md text-sm"
+              placeholder="Enter a unique asset name"
+            />
+            <button
+              onClick={handleGenerateName}
+              className="px-3 bg-gray-300 hover:bg-gray-400 rounded-r-md text-gray-700 text-sm flex items-center justify-center"
+              title="Generate Name"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Main content areas */}

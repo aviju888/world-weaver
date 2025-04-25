@@ -6,21 +6,22 @@ import { createPortal } from 'react-dom';
 interface EditorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: () => void;
   title: string;
   children: React.ReactNode;
 }
 
-export default function EditorModal({ isOpen, onClose, title, children }: EditorModalProps) {
+export default function EditorModal({ isOpen, onClose, onSave, title, children }: EditorModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    
+
     // Prevent scrolling when modal is open
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     }
-    
+
     return () => {
       document.body.style.overflow = 'auto';
     };
@@ -35,7 +36,7 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
@@ -43,7 +44,7 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
         <div className="bg-gray-800 p-4 rounded-t-lg">
           <div className="container flex justify-between items-center">
             <h1 className="text-2xl font-bold header-logo">{title}</h1>
-            <button 
+            <button
               onClick={onClose}
               className="text-white hover:text-gray-300 text-2xl"
             >
@@ -51,11 +52,11 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
             </button>
           </div>
         </div>
-        
+
         <div className="p-4">
           {children}
         </div>
-        
+
         <div className="border-t border-gray-200 p-4 flex justify-end">
           <button
             onClick={onClose}
@@ -64,7 +65,12 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
             Cancel
           </button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              const shouldClose = onSave?.(); // this will return true/false
+              if (shouldClose) {
+                onClose();
+              }
+            }}
             className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md"
           >
             Save Changes
