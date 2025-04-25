@@ -23,6 +23,22 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
   const [activeTab, setActiveTab] = useState<AssetType>(initialData?.type || 'NPC');
   const [name, setName] = useState(initialData?.name || '');
 
+  useEffect(() => {
+    const newOptions = getAttributeOptions(activeTab);
+    setSelectedAttribute(newOptions[0]);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset states when modal closes
+      setCards([]);
+      setAttributeContent('');
+      setSelectedAttribute(getAttributeOptions(activeTab)[0]);
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [isOpen]);
+
   const handleAddToNotes = () => {
     if (!attributeContent.trim()) return;
 
@@ -101,7 +117,10 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
         },
         body: JSON.stringify({
           attribute: selectedAttribute,
-          character_name: name,
+          asset_name: name,
+          asset_type: activeTab,
+          inspirations: stringifyCards(cards),
+          user_input: attributeContent,
         }),
       });
 
@@ -115,13 +134,33 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
+  const stringifyCards = (cards: { id: string; title?: string; text?: string; image?: string; editing: boolean }[]) => {
+    return cards
+      .filter(card => card.title || card.text) // only include cards that have something meaningful
+      .map(card => {
+        const title = card.title ? card.title.trim() : '';
+        const text = card.text ? card.text.trim() : '';
+        if (title && text) {
+          return `${title}: ${text}`;
+        } else if (text) {
+          return text;
+        } else if (title) {
+          return title;
+        } else {
+          return '';
+        }
+      })
+      .filter(Boolean) // remove empty strings
+      .join('; '); // separate entries by ;
+  };
+
   const handleSave = () => {
     if (!name.trim()) {
       alert("Please enter a name before saving.");
       return false;
     }
-
-    const npcData = {
+  
+    const assetData = {
       name,
       cards: cards.map(({ id, image, text, title }) => ({
         id,
@@ -130,21 +169,39 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
         title,
       })),
     };
-
+  
     const localDataRaw = localStorage.getItem('worldData');
     const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
-
+  
     if (!localData[worldName]) {
       localData[worldName] = {};
     }
-    if (!localData[worldName]['asset-npc']) {
-      localData[worldName]['asset-npc'] = {};
+  
+    // Determine the correct category based on activeTab
+    let assetCategory = '';
+    switch (activeTab) {
+      case 'NPC':
+        assetCategory = 'asset-npc';
+        break;
+      case 'Location':
+        assetCategory = 'asset-location';
+        break;
+      case 'Item':
+        assetCategory = 'asset-item';
+        break;
+      default:
+        assetCategory = 'asset-npc'; // fallback
     }
-
-    localData[worldName]['asset-npc'][name] = npcData;
-
+  
+    if (!localData[worldName][assetCategory]) {
+      localData[worldName][assetCategory] = {};
+    }
+  
+    localData[worldName][assetCategory][name] = assetData;
+  
     localStorage.setItem('worldData', JSON.stringify(localData));
-    alert(`NPC "${name}" saved to world "${worldName}"`);
+  
+    alert(`${activeTab} "${name}" saved to world "${worldName}"`);
     return true;
   };
 
@@ -169,17 +226,54 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
-  const attributeOptions = [
-    'Race & Species',
-    'Background',
-    'Personality',
-    'Ideals',
-    'Flaws & Quirks',
-    'Notable Relationships',
-    'Other',
-  ];
+  // const attributeOptions = [
+  //   'Race & Species',
+  //   'Background',
+  //   'Personality',
+  //   'Ideals',
+  //   'Flaws & Quirks',
+  //   'Notable Relationships',
+  //   'Other',
+  // ];
 
-  const [selectedAttribute, setSelectedAttribute] = useState(attributeOptions[0]);
+  const getAttributeOptions = (tab: AssetType) => {
+    switch (tab) {
+      case 'NPC':
+        return [
+          'Race & Species',
+          'Background',
+          'Personality',
+          'Ideals',
+          'Flaws & Quirks',
+          'Notable Relationships',
+          'Other',
+        ];
+      case 'Location':
+        return [
+          'Geography & Terrain',
+          'Climate & Weather',
+          'History',
+          'Culture & Customs',
+          'Important Landmarks',
+          'Local Dangers',
+          'Other',
+        ];
+      case 'Item':
+        return [
+          'Type & Category',
+          'Origin Story',
+          'Materials Used',
+          'Magical Properties',
+          'Usage Instructions',
+          'Known Owners',
+          'Other',
+        ];
+      default:
+        return ['Other'];
+    }
+  };
+
+  const [selectedAttribute, setSelectedAttribute] = useState(getAttributeOptions(activeTab)[0]);
   const [attributeContent, setAttributeContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -336,7 +430,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
                   onChange={(e) => setSelectedAttribute(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md text-sm mb-3"
                 >
-                  {attributeOptions.map((opt) => (
+                  {getAttributeOptions(activeTab).map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
                     </option>
@@ -348,7 +442,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
                   value={attributeContent}
                   onChange={(e) => setAttributeContent(e.target.value)}
                   className="w-full h-32 p-2 border border-gray-300 rounded-md text-sm"
-                  placeholder={`Write about the character's ${selectedAttribute.toLowerCase()}...`}
+                  placeholder={`Write about the ${activeTab}'s ${selectedAttribute.toLowerCase()}...`}
                 />
               </div>
 
