@@ -97,6 +97,38 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     setCards(cards.filter(card => card.id !== id));
   };
 
+  const handleGenerateDescription = async () => {
+    if (!name.trim()) {
+      setError("Please enter a character name.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('https://noggin.rea.gent/remaining-gerbil-7933', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer rg_v1_1z7gih66ihnzqf19eqb9ldrs3zlwd7aqi0sp_ngk',
+        },
+        body: JSON.stringify({
+          attribute: selectedAttribute,
+          character_name: name,
+        }),
+      });
+
+      const text = await res.text();
+      setAttributeContent(text);
+    } catch (err: any) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const attributeOptions = [
     'Race & Species',
     'Background',
@@ -107,8 +139,11 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     'Other',
   ];
 
+
   const [selectedAttribute, setSelectedAttribute] = useState(attributeOptions[0]);
   const [attributeContent, setAttributeContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor">
@@ -144,15 +179,15 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
         </div>
 
         <div >
-  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-  <input
-    type="text"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-    className="w-full p-2 border border-gray-300 rounded-md text-sm"
-    placeholder="Enter a unique asset name"
-  />
-</div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+            placeholder="Enter a unique asset name"
+          />
+        </div>
 
         {/* Main content areas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,12 +314,22 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
                 />
               </div>
 
-              <button
-                onClick={handleAddToNotes}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm"
-              >
-                Add to Notes
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerateDescription}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Generating...' : 'Generate Description'}
+                </button>
+                <button
+                  onClick={handleAddToNotes}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm"
+                >
+                  Add to Notes
+                </button>
+              </div>
+              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
 
             <div className="mt-8">
