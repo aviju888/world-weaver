@@ -22,19 +22,6 @@ interface AssetEditorProps {
 export default function AssetEditor({ isOpen, onClose, initialData, worldName }: AssetEditorProps) {
   const [activeTab, setActiveTab] = useState<AssetType>(initialData?.type || 'NPC');
   const [name, setName] = useState(initialData?.name || '');
-  const [personality, setPersonality] = useState(initialData?.personality || '');
-  const [bio, setBio] = useState(initialData?.bio || '');
-  const [notes, setNotes] = useState('');
-
-  const assetId = initialData?.id || 'new-asset-' + crypto.randomUUID();
-  const storageKey = `assetData:${assetId}`;
-
-  // Placeholder data for AI-generated examples
-  const aiSuggestions = {
-    name: "Kaelin Voss",
-    personality: "A sharp-witted merchant with a hidden past.",
-    bio: "Once a disgraced noble, Kaelin now thrives in the underbelly of the city dealing in rare artifacts. He keeps a dagger strapped to his wrist—just in case an old rival comes knocking."
-  };
 
   const handleAddToNotes = () => {
     if (!attributeContent.trim()) return;
@@ -48,8 +35,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     };
 
     setCards([...cards, newCard]);
-
-    // Optional: clear content after adding
     setAttributeContent('');
   };
 
@@ -184,7 +169,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
-
   const attributeOptions = [
     'Race & Species',
     'Background',
@@ -194,7 +178,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     'Notable Relationships',
     'Other',
   ];
-
 
   const [selectedAttribute, setSelectedAttribute] = useState(attributeOptions[0]);
   const [attributeContent, setAttributeContent] = useState('');
@@ -345,16 +328,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
             <h2 className="text-xl font-bold mb-4 text-gray-800">AI-Assisted Generator</h2>
 
             <div className="space-y-4">
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder={aiSuggestions.name}
-                />
-              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Attribute</label>
