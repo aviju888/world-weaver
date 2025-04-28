@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 interface EditorModalProps {
   isOpen: boolean;
@@ -15,16 +14,7 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
 
   useEffect(() => {
     setMounted(true);
-    
-    // Prevent scrolling when modal is open
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isOpen]);
+  }, []);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -34,44 +24,44 @@ export default function EditorModal({ isOpen, onClose, title, children }: Editor
 
   if (!mounted || !isOpen) return null;
 
-  return createPortal(
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={handleBackdropClick}
+  return isOpen ? (
+    <div
+      className="fixed left-0 top-0 h-full flex items-start z-50 pointer-events-none"
+      style={{ width: '100vw' }}
     >
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-auto">
-        <div className="bg-gray-800 p-4 rounded-t-lg">
-          <div className="container flex justify-between items-center">
-            <h1 className="text-2xl font-bold header-logo">{title}</h1>
-            <button 
+      <div
+        className="relative ml-6 mt-8 pointer-events-auto"
+        style={{ minWidth: 400, maxWidth: 480 }}
+      >
+        <div className="bg-white rounded-xl shadow-2xl p-4 border border-gray-200">
+          <div className="bg-gray-800 p-4 rounded-t-xl flex justify-between items-center">
+            <h1 className="text-xl font-bold header-logo text-white">{title}</h1>
+            <button className="text-white hover:text-gray-300 text-2xl" onClick={onClose}>&times;</button>
+          </div>
+          <div className="p-4">{children}</div>
+          <div className="border-t border-gray-200 p-4 flex justify-end">
+            <button
               onClick={onClose}
-              className="text-white hover:text-gray-300 text-2xl"
+              className="mr-2 px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md"
             >
-              &times;
+              Cancel
+            </button>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md"
+            >
+              Save Changes
             </button>
           </div>
         </div>
-        
-        <div className="p-4">
-          {children}
-        </div>
-        
-        <div className="border-t border-gray-200 p-4 flex justify-end">
-          <button
-            onClick={onClose}
-            className="mr-2 px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md"
-          >
-            Save Changes
-          </button>
-        </div>
       </div>
-    </div>,
-    document.body
-  );
+    </div>
+  ) : null;
 } 
+
+/* Tailwind Animations */
+// Add to your global CSS if not present:
+// @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+// .animate-fade-in { animation: fade-in 0.3s ease; }
+// @keyframes modal-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+// .animate-modal-in { animation: modal-in 0.3s cubic-bezier(0.4,0,0.2,1); }

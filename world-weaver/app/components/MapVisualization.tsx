@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import MapPin from './MapPin';
+import Sidebar from './Sidebar';
 
 type Quest = {
   id: string;
   title: string;
   description: string;
-  position?: { x: number, y: number };
+  position?: { top: string; left: string };
 };
 
 type Asset = {
@@ -14,196 +17,183 @@ type Asset = {
   name: string;
   type: 'character' | 'item' | 'location';
   description: string;
-  position?: { x: number, y: number };
+  position?: { top: string; left: string };
 };
 
 interface MapVisualizationProps {
   mapUrl: string;
-  quests: Quest[];
-  assets: Asset[];
+  quests?: Quest[];
+  assets?: Asset[];
   onQuestClick: (quest: Quest) => void;
   onAssetClick: (asset: Asset) => void;
-  onUpdateQuestPosition?: (questId: string, position: { x: number, y: number }) => void;
-  onUpdateAssetPosition?: (assetId: string, position: { x: number, y: number }) => void;
+  onUpdateQuestPosition?: (questId: string, position: { top: string; left: string }) => void;
+  onUpdateAssetPosition?: (assetId: string, position: { top: string; left: string }) => void;
 }
 
-export default function MapVisualization({ 
-  mapUrl, 
-  quests, 
-  assets, 
-  onQuestClick, 
+export default function MapVisualization({
+  mapUrl,
+  quests = [],
+  assets = [],
+  onQuestClick,
   onAssetClick,
   onUpdateQuestPosition,
-  onUpdateAssetPosition
+  onUpdateAssetPosition,
 }: MapVisualizationProps) {
-  const [draggingItem, setDraggingItem] = useState<{ id: string, type: 'quest' | 'asset' } | null>(null);
-  const [showLabels, setShowLabels] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{ type: 'quest' | 'asset'; data: Quest | Asset } | null>(null);
+  const [isPlacingItem, setIsPlacingItem] = useState<{ type: 'quest' | 'asset'; id: string } | null>(null);
 
-  // Function to handle drag start on a marker
-  const handleDragStart = (id: string, type: 'quest' | 'asset') => {
-    setDraggingItem({ id, type });
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragItem, setDragItem] = useState<{ type: 'quest' | 'asset'; id: string } | null>(null);
+
+  const transformWrapperRef = useRef<any>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  const handlePinClick = (item: Quest | Asset, type: 'quest' | 'asset') => {
+    setSelectedItem({ type, data: item });
+    setIsSidebarOpen(true);
   };
 
-  // Function to handle drag end and position update
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!draggingItem) return;
-    
-    const mapContainer = e.currentTarget;
-    const rect = mapContainer.getBoundingClientRect();
-    
-    // Calculate position as percentage of container dimensions
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    // Update position in parent component
-    if (draggingItem.type === 'quest' && onUpdateQuestPosition) {
-      onUpdateQuestPosition(draggingItem.id, { x, y });
-    } else if (draggingItem.type === 'asset' && onUpdateAssetPosition) {
-      onUpdateAssetPosition(draggingItem.id, { x, y });
+  const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPlacingItem || !transformWrapperRef.current || !imageRef.current) return;
+
+    const { instance } = transformWrapperRef.current;
+    const state = instance.transformState;
+    const imageElement = imageRef.current;
+    const rect = imageElement.getBoundingClientRect();
+
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    const originalX = (clickX / state.scale) - (state.positionX / state.scale);
+    const originalY = (clickY / state.scale) - (state.positionY / state.scale);
+
+    const imageWidth = imageElement.naturalWidth;
+    const imageHeight = imageElement.naturalHeight;
+
+    if (!imageWidth || !imageHeight) {
+      setIsPlacingItem(null);
+      return;
     }
-    
-    setDraggingItem(null);
+
+    const top = `${Math.max(0, Math.min(100, (originalY / imageHeight) * 100))}%`;
+    const left = `${Math.max(0, Math.min(100, (originalX / imageWidth) * 100))}%`;
+
+    if (isPlacingItem.type === 'quest' && onUpdateQuestPosition) {
+      onUpdateQuestPosition(isPlacingItem.id, { top, left });
+    } else if (isPlacingItem.type === 'asset' && onUpdateAssetPosition) {
+      onUpdateAssetPosition(isPlacingItem.id, { top, left });
+    }
+    setIsPlacingItem(null);
   };
 
-  // Calculate icons for different asset types
-  const getAssetIcon = (type: 'character' | 'item' | 'location') => {
-    switch (type) {
-      case 'character':
-        return '👤'; // Character icon
-      case 'location':
-        return '🏠'; // Location icon
-      case 'item':
-        return '⚔️'; // Item icon
-    }
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e: React.DragEvent) => {
+    setIsDragOver(false);
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      if (!data || !imageRef.current) return;
+      const rect = imageRef.current.getBoundingClientRect();
+      const dropX = e.clientX - rect.left;
+      const dropY = e.clientY - rect.top;
+      const imageWidth = imageRef.current.naturalWidth;
+      const imageHeight = imageRef.current.naturalHeight;
+      if (!imageWidth || !imageHeight) return;
+      const top = `${Math.max(0, Math.min(100, (dropY / rect.height) * 100))}%`;
+      const left = `${Math.max(0, Math.min(100, (dropX / rect.width) * 100))}%`;
+      if (data.type === 'quest' && onUpdateQuestPosition) {
+        onUpdateQuestPosition(data.id, { top, left });
+      } else if (data.type === 'asset' && onUpdateAssetPosition) {
+        onUpdateAssetPosition(data.id, { top, left });
+      }
+    } catch {}
+  };
+
+  const startPlacingItem = (item: Quest | Asset, type: 'quest' | 'asset') => {
+    setIsPlacingItem({ type, id: item.id });
+    setIsSidebarOpen(false);
+    setSelectedItem(null);
   };
 
   return (
-    <div className="relative w-full h-full" onClick={handleMapClick}>
-      {/* Map Image */}
-      <img 
-        src={mapUrl} 
-        alt="World Map" 
-        className="w-full h-full object-contain rounded-lg"
+    <div className="relative w-full h-full flex">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        selectedItem={selectedItem}
+        onEditClick={(item) => {
+          if (item.type === 'quest' && typeof onQuestClick === 'function') onQuestClick(item.data as Quest);
+          if (item.type === 'asset' && typeof onAssetClick === 'function') onAssetClick(item.data as Asset);
+        }}
+        onPlaceClick={(item, type) => startPlacingItem(item, type)}
+        quests={quests}
+        assets={assets}
       />
-      
-      {/* Toggles */}
-      <div className="absolute top-2 right-2 bg-white bg-opacity-70 p-2 rounded-md z-10">
-        <label className="flex items-center text-xs text-gray-700">
-          <input
-            type="checkbox"
-            checked={showLabels}
-            onChange={(e) => setShowLabels(e.target.checked)}
-            className="mr-2"
-          />
-          Show Labels
-        </label>
-      </div>
-      
-      {/* Instructions */}
-      <div className="absolute top-2 left-2 bg-white bg-opacity-70 p-2 rounded-md z-10 text-xs text-gray-700">
-        {draggingItem ? (
-          <p>Click on the map to place the item</p>
-        ) : (
-          <p>Drag and drop quests & assets onto the map</p>
+
+      <div className={`flex-1 relative`} style={{ minHeight: 400 }}>
+        <TransformWrapper
+          ref={transformWrapperRef}
+          initialScale={1}
+          minScale={0.2}
+          limitToBounds={false}
+          wheel={{ step: 0.1 }}
+        >
+          <TransformComponent
+            wrapperStyle={{ width: '100%', height: '100%' }}
+            contentStyle={{ width: 'auto', height: 'auto' }}
+          >
+            <div
+              className={`relative w-full h-full${isDragOver ? ' ring-4 ring-emerald-200' : ''}`}
+              onClick={handleMapClick}
+              style={{ cursor: isPlacingItem ? 'crosshair' : 'grab' }}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragLeave={handleDragLeave}
+            >
+              <img
+                ref={imageRef}
+                src={mapUrl}
+                alt="World Map"
+                className="w-full h-full object-contain rounded-lg"
+                draggable={false}
+              />
+
+              {quests.filter(q => q.position?.top && q.position?.left).map(quest => (
+                <MapPin
+                  key={`quest-${quest.id}`}
+                  top={quest.position!.top}
+                  left={quest.position!.left}
+                  label={quest.title}
+                  itemType="quest"
+                  onClick={() => handlePinClick(quest, 'quest')}
+                  isSelected={selectedItem?.type === 'quest' && selectedItem?.data.id === quest.id}
+                />
+              ))}
+
+              {assets.filter(a => a.position?.top && a.position?.left).map(asset => (
+                <MapPin
+                  key={`asset-${asset.id}`}
+                  top={asset.position!.top}
+                  left={asset.position!.left}
+                  label={asset.name}
+                  itemType={asset.type}
+                  onClick={() => handlePinClick(asset, 'asset')}
+                  isSelected={selectedItem?.type === 'asset' && selectedItem?.data.id === asset.id}
+                />
+              ))}
+            </div>
+          </TransformComponent>
+        </TransformWrapper>
+        {isPlacingItem && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded shadow z-20 text-xs">
+            Click on the map to place {isPlacingItem.type}
+          </div>
         )}
-      </div>
-      
-      {/* Quest Markers */}
-      {quests.map((quest) => (
-        quest.position ? (
-          <div
-            key={quest.id}
-            className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-            style={{ 
-              left: `${quest.position.x}%`, 
-              top: `${quest.position.y}%` 
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuestClick(quest);
-            }}
-            draggable
-            onDragStart={() => handleDragStart(quest.id, 'quest')}
-          >
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                Q
-              </div>
-              {showLabels && (
-                <div className="mt-1 bg-white px-2 py-1 rounded text-xs shadow">
-                  {quest.title}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null
-      ))}
-      
-      {/* Asset Markers */}
-      {assets.map((asset) => (
-        asset.position ? (
-          <div
-            key={asset.id}
-            className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-            style={{ 
-              left: `${asset.position.x}%`, 
-              top: `${asset.position.y}%` 
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAssetClick(asset);
-            }}
-            draggable
-            onDragStart={() => handleDragStart(asset.id, 'asset')}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md
-                ${asset.type === 'character' ? 'bg-blue-500' : 
-                  asset.type === 'location' ? 'bg-green-500' : 'bg-purple-500'}
-              `}>
-                {getAssetIcon(asset.type)}
-              </div>
-              {showLabels && (
-                <div className="mt-1 bg-white px-2 py-1 rounded text-xs shadow">
-                  {asset.name}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null
-      ))}
-      
-      {/* Quest List for Dragging (if no position set yet) */}
-      <div className="absolute bottom-2 left-2 bg-white bg-opacity-90 p-2 rounded-md z-10 max-w-[40%] max-h-[30%] overflow-auto">
-        <h4 className="text-xs font-bold mb-1">Unplaced Items:</h4>
-        <div className="flex flex-wrap gap-1">
-          {quests.filter(q => !q.position).map(quest => (
-            <div
-              key={quest.id}
-              className="bg-red-500 text-white text-xs px-2 py-1 rounded cursor-grab"
-              draggable
-              onDragStart={() => handleDragStart(quest.id, 'quest')}
-            >
-              {quest.title}
-            </div>
-          ))}
-          {assets.filter(a => !a.position).map(asset => (
-            <div
-              key={asset.id}
-              className={`
-                text-white text-xs px-2 py-1 rounded cursor-grab
-                ${asset.type === 'character' ? 'bg-blue-500' : 
-                  asset.type === 'location' ? 'bg-green-500' : 'bg-purple-500'}
-              `}
-              draggable
-              onDragStart={() => handleDragStart(asset.id, 'asset')}
-            >
-              {asset.name}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
-} 
+}
