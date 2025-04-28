@@ -464,46 +464,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
               {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
 
-            <div className="mt-8">
-              <h3 className="text-sm font-bold text-gray-700 mb-3">Quick Adjustments</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={handleRegenerate}
-                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
-                >
-                  Regenerate
-                </button>
-                <button
-                  onClick={handleExpandDescription}
-                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
-                >
-                  Expand Description
-                </button>
-                <button
-                  onClick={handleMakeMoreUnique}
-                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
-                >
-                  Make It More Unique
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-8">
-              <h3 className="text-sm font-bold text-gray-700 mb-2">Optional Customization</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Enter a Brief Prompt</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    className="flex-1 p-2 border border-gray-300 rounded-l-md"
-                    placeholder="A rogue with a tragic past."
-                  />
-                  <button className="px-3 py-2 bg-gray-600 text-white rounded-r-md text-sm">
-                    Go
-                  </button>
-                </div>
-              </div>
-            </div>
 
             <div className="mt-8">
               <h3 className="text-sm font-bold text-gray-700 mb-2">Smart Linking</h3>
