@@ -373,9 +373,9 @@ export default function CreateWorldPage() {
           id: currentQuest.id,
           name: currentQuest.title || '',
           description: currentQuest.description || '',
-          objectives: Array.isArray((currentQuest as any).objectives) ? (currentQuest as any).objectives : [],
-          rewards: typeof (currentQuest as any).rewards === 'string' ? (currentQuest as any).rewards : '',
-          difficulty: typeof (currentQuest as any).difficulty === 'string' ? (currentQuest as any).difficulty : 'Medium',
+          objectives: currentQuest.objectives || [],
+          rewards: currentQuest.rewards || '',
+          difficulty: currentQuest.difficulty || 'Medium'
         } : undefined}
         worldName={worldName}
       />
@@ -385,11 +385,10 @@ export default function CreateWorldPage() {
         initialData={currentAsset ? {
           id: currentAsset.id,
           name: currentAsset.name || '',
-          type: currentAsset.type === 'character' ? 'NPC'
-                : currentAsset.type === 'location' ? 'Location' : 'Item',
-          personality: typeof (currentAsset as any).personality === 'string' ? (currentAsset as any).personality : '',
-          bio: typeof (currentAsset as any).bio === 'string' ? (currentAsset as any).bio
-              : typeof currentAsset.description === 'string' ? currentAsset.description : '',
+          type: currentAsset.type === 'character' ? 'NPC' :
+                currentAsset.type === 'location' ? 'Location' : 'Item',
+          personality: currentAsset.personality || '',
+          bio: currentAsset.description || '',
         } : undefined}
         worldName={worldName}
       />

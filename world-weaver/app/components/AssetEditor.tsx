@@ -20,17 +20,6 @@ interface AssetEditorProps {
 }
 
 export default function AssetEditor({ isOpen, onClose, initialData, worldName }: AssetEditorProps) {
-  // Fallback: render a visible message if modal is open but no initialData is provided
-  if (isOpen && !initialData) {
-    return (
-      <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor">
-        <div style={{ color: 'red', padding: 24, fontWeight: 'bold' }}>
-          No initial data provided to AssetEditor!
-        </div>
-      </EditorModal>
-    );
-  }
-
   const [activeTab, setActiveTab] = useState<AssetType>(initialData?.type || 'NPC');
   const [name, setName] = useState(initialData?.name || '');
 
@@ -49,14 +38,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
       setError(null);
     }
   }, [isOpen]);
-
-  const [cards, setCards] = useState<
-    { id: string; image?: string; text?: string; title?: string; editing: boolean }[]
-  >([]);
-  const [selectedAttribute, setSelectedAttribute] = useState<string>('');
-  const [attributeContent, setAttributeContent] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleAddToNotes = () => {
     if (!attributeContent.trim()) return;
@@ -87,6 +68,10 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     // In a real application, this would call an AI API to make the asset more unique
     alert('In a complete app, this would make the asset more unique using AI!');
   };
+
+  const [cards, setCards] = useState<
+    { id: string; image?: string; text?: string; title?: string; editing: boolean }[]
+  >([]);
 
   const handleAddCard = () => {
     setCards([
@@ -151,7 +136,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
 
   const stringifyCards = (cards: { id: string; title?: string; text?: string; image?: string; editing: boolean }[]) => {
     return cards
-      .filter(card => card.title || card.text)
+      .filter(card => card.title || card.text) // only include cards that have something meaningful
       .map(card => {
         const title = card.title ? card.title.trim() : '';
         const text = card.text ? card.text.trim() : '';
@@ -165,8 +150,8 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
           return '';
         }
       })
-      .filter(Boolean)
-      .join('; ');
+      .filter(Boolean) // remove empty strings
+      .join('; '); // separate entries by ;
   };
 
   const handleSave = () => {
@@ -192,6 +177,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
       localData[worldName] = {};
     }
   
+    // Determine the correct category based on activeTab
     let assetCategory = '';
     switch (activeTab) {
       case 'NPC':
@@ -204,7 +190,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
         assetCategory = 'asset-item';
         break;
       default:
-        assetCategory = 'asset-npc';
+        assetCategory = 'asset-npc'; // fallback
     }
   
     if (!localData[worldName][assetCategory]) {
@@ -239,6 +225,16 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
       alert('Failed to generate name. Please try again.');
     }
   };
+
+  // const attributeOptions = [
+  //   'Race & Species',
+  //   'Background',
+  //   'Personality',
+  //   'Ideals',
+  //   'Flaws & Quirks',
+  //   'Notable Relationships',
+  //   'Other',
+  // ];
 
   const getAttributeOptions = (tab: AssetType) => {
     switch (tab) {
@@ -277,6 +273,11 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
+  const [selectedAttribute, setSelectedAttribute] = useState(getAttributeOptions(activeTab)[0]);
+  const [attributeContent, setAttributeContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   return (
     <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor" onSave={handleSave}>
       <div className="flex flex-col space-y-6">
@@ -291,23 +292,25 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
               <li key={type} className="mr-1">
                 <button
                   onClick={() => setActiveTab(type)}
-                  className={`py-2 px-4 text-sm font-medium ${
-                    activeTab === type
-                      ? 'text-emerald-600 border-b-2 border-emerald-500'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`py-2 px-4 text-sm font-medium ${activeTab === type
+                    ? 'text-emerald-600 border-b-2 border-emerald-500'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                   {type}
                 </button>
               </li>
             ))}
             <li className="mr-1">
-              <button className="py-2 px-4 text-sm font-medium text-gray-400">•••</button>
+              <button
+                className="py-2 px-4 text-sm font-medium text-gray-400"
+              >
+                •••
+              </button>
             </li>
           </ul>
         </div>
 
-        {/* Name Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
           <div className="flex">
@@ -328,8 +331,187 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
           </div>
         </div>
 
-        {/* Inspirations & AI Generator code omitted for brevity */}
+        {/* Main content areas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column - Inspirations */}
+          {/* Card-based Inspirations Section */}
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Your Inspirations</h2>
+            <p className="text-gray-500 text-sm mb-4">Add cards containing text and/or images to help inspire or describe this asset.</p>
+
+            <div className="space-y-4">
+              {cards.map((card, index) => (
+                <div key={card.id} className="border border-gray-300 rounded-lg p-4 shadow-sm relative">
+                  <button
+                    onClick={() => handleRemoveCard(card.id)}
+                    className="absolute top-2 right-2 text-sm text-gray-400 hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+
+                  {card.editing ? (
+                    <>
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input
+                          type="text"
+                          placeholder="Paste image URL here"
+                          value={card.image}
+                          onChange={(e) => handleCardChange(card.id, 'image', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
+                        <textarea
+                          placeholder="Write your inspiration text..."
+                          value={card.text}
+                          onChange={(e) => handleCardChange(card.id, 'text', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                          rows={3}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSubmitCard(card.id)}
+                        className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700"
+                      >
+                        Submit
+                      </button>
+                    </>
+                  ) : (
+                    <>
+
+                      <div className="flex space-x-4 items-start">
+                        {card.image && (
+                          <div className="w-32 flex-shrink-0">
+                            <img
+                              src={card.image}
+                              alt={`Card ${index + 1}`}
+                              className="rounded-md object-cover max-w-full max-h-40"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          {card.title && (
+                            <h3 className="text-sm font-bold text-gray-800 mb-1">{card.title}</h3>
+                          )}
+                          {card.text && (
+                            <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                              {card.text}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )
+                  }
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleAddCard}
+              className="mt-4 w-full px-4 py-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700"
+            >
+              + Add New Card
+            </button>
+          </div>
+
+          {/* Right Column - AI Generator */}
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">AI-Assisted Generator</h2>
+
+            <div className="space-y-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Attribute</label>
+                <select
+                  value={selectedAttribute}
+                  onChange={(e) => setSelectedAttribute(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm mb-3"
+                >
+                  {getAttributeOptions(activeTab).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={attributeContent}
+                  onChange={(e) => setAttributeContent(e.target.value)}
+                  className="w-full h-32 p-2 border border-gray-300 rounded-md text-sm"
+                  placeholder={`Write about the ${activeTab}'s ${selectedAttribute.toLowerCase()}...`}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerateDescription}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Generating...' : 'Generate Description'}
+                </button>
+                <button
+                  onClick={handleAddToNotes}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm"
+                >
+                  Add to Notes
+                </button>
+              </div>
+              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-sm font-bold text-gray-700 mb-3">Quick Adjustments</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={handleRegenerate}
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
+                >
+                  Regenerate
+                </button>
+                <button
+                  onClick={handleExpandDescription}
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
+                >
+                  Expand Description
+                </button>
+                <button
+                  onClick={handleMakeMoreUnique}
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
+                >
+                  Make It More Unique
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-sm font-bold text-gray-700 mb-2">Optional Customization</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Enter a Brief Prompt</label>
+                <div className="flex">
+                  <input
+                    type="text"
+                    className="flex-1 p-2 border border-gray-300 rounded-l-md"
+                    placeholder="A rogue with a tragic past."
+                  />
+                  <button className="px-3 py-2 bg-gray-600 text-white rounded-r-md text-sm">
+                    Go
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-sm font-bold text-gray-700 mb-2">Smart Linking</h3>
+              <p className="text-gray-500 text-xs">Link this NPC/Item/Location to other inspirations in your project.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </EditorModal>
   );
-}
+} 
