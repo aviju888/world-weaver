@@ -1,3 +1,4 @@
+// FlowCanvas.tsx
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import ReactFlow, {
@@ -15,10 +16,19 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import CustomCardNode from './Card';
 import SlidingPane from './QuestInfoSlider';
+import AssetPane from './AssetPane';
 
 let id = 1;
 const getId = () => `${id++}`;
 const storageKey = 'flow-data';
+
+const questTypes = [
+  { label: 'Main Quest', color: '#e9d5ff' },
+  { label: 'Story Quest', color: '#99f6e4' },
+  { label: 'Side Quest', color: '#86efac' },
+  { label: 'Boss Fight', color: '#93c5fd' },
+  { label: 'Asset', color: '#6b7280' },
+];
 
 const defaultNodes: Node[] = [
   {
@@ -29,16 +39,10 @@ const defaultNodes: Node[] = [
       title: 'World',
       text: 'This is your world.',
       color: '#000000',
+      isAsset: false,
       onTextChange: () => {},
     },
   },
-];
-
-const questTypes = [
-  { label: 'Main Quest', color: '#e9d5ff' },
-  { label: 'Story Quest', color: '#99f6e4' },
-  { label: 'Side Quest', color: '#86efac' },
-  { label: 'Boss Fight', color: '#93c5fd' },
 ];
 
 const FlowCanvasInner = () => {
@@ -54,9 +58,9 @@ const FlowCanvasInner = () => {
   const [currentQuestType, setCurrentQuestType] = useState<{ color: string; label: string } | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [selectedAsset, setSelectedAsset] = useState<Node | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // Load/save state
   useEffect(() => {
     const savedFlow = localStorage.getItem(storageKey);
     if (savedFlow) {
@@ -74,9 +78,6 @@ const FlowCanvasInner = () => {
       })));
       setEdges(savedEdges);
       setViewport(viewport);
-    } else {
-      setNodes(defaultNodes);
-      setEdges([]);
     }
   }, []);
 
@@ -87,10 +88,11 @@ const FlowCanvasInner = () => {
     return () => clearTimeout(saveTimer);
   }, [nodes, edges, toObject]);
 
-  // Node management
   const addCard = () => {
     if (!currentQuestType || !newQuestName.trim()) return;
+    const isAsset = currentQuestType.label === 'Asset';
     const newId = getId();
+    
     setNodes(nds => [...nds, {
       id: newId,
       type: 'customCard',
@@ -99,6 +101,7 @@ const FlowCanvasInner = () => {
         title: newQuestName,
         text: 'Write something here.',
         color: currentQuestType.color,
+        isAsset,
         onTextChange: (newText: string) => {
           setNodes(nodes => nodes.map(node =>
             node.id === newId ? { ...node, data: { ...node.data, text: newText } } : node
@@ -106,6 +109,7 @@ const FlowCanvasInner = () => {
         }
       },
     }]);
+    
     setNewQuestName('');
     setCurrentQuestType(null);
     setShowAddPopup(false);
@@ -137,7 +141,6 @@ const FlowCanvasInner = () => {
     });
   };
 
-  // Context menu handlers
   const handleRightClick = (event: React.MouseEvent) => {
     event.preventDefault();
     if (!selectedNodeId) {
@@ -154,7 +157,6 @@ const FlowCanvasInner = () => {
     setShowPopup(true);
   };
 
-  // Close popup on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
@@ -190,7 +192,10 @@ const FlowCanvasInner = () => {
           onNodeContextMenu={handleNodeRightClick}
           nodeTypes={nodeTypes}
           connectionRadius={20}
-          isValidConnection={connection => connection.source !== connection.target}
+          isValidConnection={(connection) => {
+            const sourceNode = nodes.find(n => n.id === connection.source);
+            return connection.source !== connection.target && !sourceNode?.data.isAsset;
+          }}
           fitView
         >
           <Background />
@@ -222,7 +227,7 @@ const FlowCanvasInner = () => {
                 type="text"
                 value={newQuestName}
                 onChange={e => setNewQuestName(e.target.value)}
-                placeholder="Enter quest name"
+                placeholder="Enter name"
                 className="w-full p-2 border rounded mb-4"
                 autoFocus
               />
@@ -253,6 +258,7 @@ const FlowCanvasInner = () => {
             <h2 className="text-lg font-semibold mb-2 text-gray-900">
               {selectedNodeId ? "Node Options" : "Canvas Options"}
             </h2>
+            
             {selectedNodeId ? (
               <>
                 <button
@@ -271,15 +277,17 @@ const FlowCanvasInner = () => {
                   }}
                   className="mt-2 w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                 >
-                  {getAllDescendants(selectedNodeId).every(id => minimizedNodes[id])
-                    ? 'Expand All Children'
+                  {getAllDescendants(selectedNodeId).every(id => minimizedNodes[id]) 
+                    ? 'Expand All Children' 
                     : 'Minimize All Children'}
                 </button>
                 <button
                   onClick={() => {
                     if (selectedNodeId) {
                       setNodes(nds => nds.filter(node => node.id !== selectedNodeId));
-                      setEdges(eds => eds.filter(edge => edge.source !== selectedNodeId && edge.target !== selectedNodeId));
+                      setEdges(eds => eds.filter(edge => 
+                        edge.source !== selectedNodeId && edge.target !== selectedNodeId
+                      ));
                       setShowPopup(false);
                       setSelectedNodeId(null);
                     }
@@ -302,9 +310,15 @@ const FlowCanvasInner = () => {
 
         <SlidingPane 
           show={showPane} 
-          onClose={() => setShowPane(false)} 
+          onClose={() => setShowPane(false)}
           edges={edges}
           nodes={nodes}
+          onAssetClick={setSelectedAsset}
+        />
+        
+        <AssetPane
+          asset={selectedAsset}
+          onClose={() => setSelectedAsset(null)}
         />
       </div>
     </div>
