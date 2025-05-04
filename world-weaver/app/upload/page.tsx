@@ -30,13 +30,13 @@ export default function UploadPage() {
           { 
             id: 'demo1', 
             name: 'Fantasy Islands', 
-            url: '/demo-map1.jpg', 
+            url: '/map-bg.jpg', 
             date: new Date().toLocaleDateString() 
           },
           { 
             id: 'demo2', 
             name: 'Mountain Kingdom', 
-            url: '/demo-map2.jpg', 
+            url: '/map-mountain.jpeg', 
             date: new Date().toLocaleDateString() 
           }
         ];
