@@ -52,15 +52,17 @@ export default function MapPin({
         transform: 'translate(-50%, -100%)',
         zIndex: isSelected ? 20 : 10
       }}
-      className="flex flex-col items-center group"
+      className="flex flex-col items-center group cursor-pointer"
     >
       {/* Label above icon */}
-      <span className={`text-sm font-bold text-black bg-white/90 px-2 rounded shadow-sm mb-1 border border-gray-300`}>
+      <span className={`text-sm font-bold text-black bg-white/90 px-2 rounded shadow-sm mb-1 border border-gray-300
+  group-hover:bg-gray-300 transition-colors duration-150`}>
         {label.length > 20 ? `${label.slice(0, 20)}…` : label}
       </span>
       {/* Colored icon */}
       <div
-        className={`rounded-full p-2 shadow-lg border border-white ${getColorClasses()}`}
+        className={`rounded-full p-2 shadow-lg border ${getColorClasses()} 
+        group-hover:brightness-90 transition-colors duration-150`}
       >
         {getIcon()}
       </div>

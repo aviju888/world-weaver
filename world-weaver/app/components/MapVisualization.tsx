@@ -28,6 +28,7 @@ interface MapVisualizationProps {
   onAssetClick: (asset: Asset) => void;
   onUpdateQuestPosition?: (questId: string, position: { top: string; left: string }) => void;
   onUpdateAssetPosition?: (assetId: string, position: { top: string; left: string }) => void;
+  worldName: string;
 }
 
 export default function MapVisualization({
@@ -38,6 +39,7 @@ export default function MapVisualization({
   onAssetClick,
   onUpdateQuestPosition,
   onUpdateAssetPosition,
+  worldName
 }: MapVisualizationProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ type: 'quest' | 'asset'; data: Quest | Asset } | null>(null);
@@ -46,12 +48,15 @@ export default function MapVisualization({
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragItem, setDragItem] = useState<{ type: 'quest' | 'asset'; id: string } | null>(null);
 
+  const [popupAsset, setPopupAsset] = useState<Asset | null>(null);
+
   const transformWrapperRef = useRef<any>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const handlePinClick = (item: Quest | Asset, type: 'quest' | 'asset') => {
-    setSelectedItem({ type, data: item });
-    setIsSidebarOpen(true);
+    if (type === 'asset') {
+      setPopupAsset(item as Asset);
+    }
   };
 
   const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -117,6 +122,23 @@ export default function MapVisualization({
     setIsPlacingItem({ type, id: item.id });
     setIsSidebarOpen(false);
     setSelectedItem(null);
+  };
+
+  const getAssetCards = (asset: Asset) => {
+    const localDataRaw = localStorage.getItem('worldData');
+    const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+  
+    let assetCategory = '';
+    switch (asset.type) {
+      case 'character': assetCategory = 'asset-npc'; break;
+      case 'location': assetCategory = 'asset-location'; break;
+      case 'item': assetCategory = 'asset-item'; break;
+      default: return [];
+    }
+  
+    const assetData = localData[worldName]?.[assetCategory]?.[asset.name];
+    if (!assetData || !assetData.cards) return [];
+    return assetData.cards;
   };
 
   return (
@@ -193,6 +215,31 @@ export default function MapVisualization({
             Click on the map to place {isPlacingItem.type}
           </div>
         )}
+{popupAsset && (
+  <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md border border-gray-300 rounded-lg shadow-lg p-4 max-w-xs z-30 overflow-y-auto max-h-[80%]">
+    <div className="flex justify-between items-center mb-2">
+      <h2 className="text-lg font-bold text-gray-800">{popupAsset.name}</h2>
+      <button
+        className="text-gray-500 hover:text-red-600 text-sm"
+        onClick={() => setPopupAsset(null)}
+      >
+        ✕
+      </button>
+    </div>
+    <div className="space-y-2">
+      {getAssetCards(popupAsset).length > 0 ? (
+        getAssetCards(popupAsset).map((card, index) => (
+          <div key={index} className="border rounded p-2 bg-white/70">
+            {card.title && <div className="font-semibold text-sm">{card.title}</div>}
+            {card.text && <div className="text-sm text-gray-700">{card.text}</div>}
+          </div>
+        ))
+      ) : (
+        <div className="text-sm text-gray-500">No notes or cards saved for this asset.</div>
+      )}
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import QuestEditor from '../components/QuestEditor';
 import AssetEditor from '../components/AssetEditor';
 import MapVisualization from '../components/MapVisualization';
 import QuestBoard from '../components/QuestBoard';
+import { UserIcon, MapIcon, BoxIcon } from 'lucide-react';
 
 type Quest = {
   id: string;
@@ -63,13 +64,13 @@ export default function CreateWorldPage() {
 
   useEffect(() => {
     if (!mapId) return;
-  
+
     const savedWorldDataRaw = localStorage.getItem('worldData');
     if (savedWorldDataRaw) {
       const savedWorldData = JSON.parse(savedWorldDataRaw);
-  
+
       const worldAssets = savedWorldData[worldName] || {};
-  
+
       const loadedAssets: Asset[] = [];
       ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
         const typeAssets = worldAssets[typeKey] || {};
@@ -81,13 +82,13 @@ export default function CreateWorldPage() {
               typeKey === 'asset-npc'
                 ? 'character'
                 : typeKey === 'asset-location'
-                ? 'location'
-                : 'item',
+                  ? 'location'
+                  : 'item',
             position: data.position ? data.position : undefined
           });
         });
       });
-  
+
       setAssets(loadedAssets);
     }
   }, [mapId, worldName]);
@@ -127,13 +128,13 @@ export default function CreateWorldPage() {
       asset.id === assetId ? { ...asset, position } : asset
     );
     setAssets(updatedAssets);
-  
+
     const localDataRaw = localStorage.getItem('worldData');
     const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
-  
+
     const asset = assets.find(a => a.id === assetId);
     if (!asset) return;
-  
+
     let assetCategory = '';
     switch (asset.type) {
       case 'character': assetCategory = 'asset-npc'; break;
@@ -141,19 +142,19 @@ export default function CreateWorldPage() {
       case 'item': assetCategory = 'asset-item'; break;
       default: return;
     }
-  
+
     if (!localData[worldName]) return;
     if (!localData[worldName][assetCategory]) return;
     if (!localData[worldName][assetCategory][asset.name]) return;
-  
+
     localData[worldName][assetCategory][asset.name].position = position;
-  
+
     localStorage.setItem('worldData', JSON.stringify(localData));
   };
 
   const handleDragStart = (e: React.DragEvent, item: Quest | Asset, type: 'quest' | 'asset') => {
     e.dataTransfer.setData('application/json', JSON.stringify({ id: item.id, type }));
-  
+
     // --- Create a small drag preview ---
     const ghost = document.createElement('div');
     ghost.style.width = '24px';
@@ -170,9 +171,9 @@ export default function CreateWorldPage() {
     ghost.style.zIndex = '9999';
     ghost.innerText = type === 'quest' ? 'Q' : 'A';
     document.body.appendChild(ghost);
-  
+
     e.dataTransfer.setDragImage(ghost, 12, 12);
-  
+
     // Remove the ghost after a tick (Firefox workaround)
     setTimeout(() => {
       document.body.removeChild(ghost);
@@ -190,9 +191,10 @@ export default function CreateWorldPage() {
       const items = localData[worldName]?.[cat] || {};
       Object.entries(items).forEach(([name, value]: any) => {
         newAssets.push({
-          id: `asset-${name}`, // use name or id scheme
+          id: name,  // keep consistent with original id usage
           name,
           type: cat === 'asset-npc' ? 'character' : cat === 'asset-location' ? 'location' : 'item',
+          position: value.position ? value.position : undefined
         });
       });
     });
@@ -223,22 +225,12 @@ export default function CreateWorldPage() {
           <aside className="w-full max-w-sm bg-white/90 border-r border-gray-100 p-8 overflow-y-auto flex-shrink-0 shadow-xl rounded-tr-2xl rounded-br-2xl transition-all duration-500">
             {/* World Name & Map Preview */}
             <div className="mb-8">
-              <input
-                type="text"
-                placeholder="World name"
-                value={worldName}
-                onChange={(e) => setWorldName(e.target.value)}
-                className="w-full font-semibold text-xl px-4 py-2 rounded-lg border border-gray-200 mb-4 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
-              />
+              <div className="w-full font-bold text-xl text-center text-gray-800 mb-4">
+                {worldName || "Unnamed World"}
+              </div>
               <div className="bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden mb-2 h-32">
                 <img src={currentMap.url} alt={currentMap.name} className="max-h-full object-contain" />
               </div>
-              <button
-                onClick={handleSave}
-                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow transition mb-2"
-              >
-                Save World
-              </button>
             </div>
             {/* Toggle Tabs */}
             <div className="flex mb-6 gap-2" role="tablist">
@@ -300,6 +292,7 @@ export default function CreateWorldPage() {
                   >
                     + Create New Quest
                   </button>
+                  
 
                 </div>
               </div>
@@ -318,12 +311,16 @@ export default function CreateWorldPage() {
                   >
                     + Create New Asset
                   </button>
+                  <div className="text-xs text-gray-500 mb-2 italic">
+  Tip: Drag assets onto the map to place them.
+</div>
                   {/* dynamic display */}
                   <div className="space-y-2 mb-2">
+
                     {assets.length > 0 ? assets.map(asset => (
                       <div
                         key={asset.id}
-                        className="bg-white border border-gray-100 rounded-lg px-4 py-3 shadow-sm flex flex-col gap-1 hover:shadow-md transition cursor-grab active:scale-95"
+                        className="bg-white border border-gray-100 rounded-lg px-4 py-3 shadow-sm flex items-center gap-3 hover:shadow-md transition cursor-grab active:scale-95"
                         draggable
                         onDragStart={e => handleDragStart(e, asset, 'asset')}
                         onClick={() => openAssetEditor(asset)}
@@ -331,12 +328,23 @@ export default function CreateWorldPage() {
                         role="button"
                         aria-label={`Edit ${asset.name}`}
                       >
-                        <span className="font-semibold text-gray-800 text-base">{asset.name}</span>
-                        {/* <span className="text-xs text-gray-500">{asset.description}</span> */}
+                        {/* Icon with background color */}
+                        <div className={`rounded-full p-2 flex items-center justify-center shadow-sm border text-white
+      ${asset.type === 'character' ? 'bg-blue-600' :
+                            asset.type === 'location' ? 'bg-green-600' :
+                              asset.type === 'item' ? 'bg-yellow-500' : 'bg-gray-400'
+                          }`}>
+                          {asset.type === 'character' && <UserIcon className="h-4 w-4" />}
+                          {asset.type === 'location' && <MapIcon className="h-4 w-4" />}
+                          {asset.type === 'item' && <BoxIcon className="h-4 w-4" />}
+                        </div>
+
+                        <span className="font-semibold text-gray-800 text-base truncate">{asset.name}</span>
                       </div>
                     )) : (
                       <div className="text-xs text-gray-400 text-center py-2">No assets added yet</div>
                     )}
+
                   </div>
 
                 </div>
@@ -358,6 +366,7 @@ export default function CreateWorldPage() {
                 onAssetClick={openAssetEditor}
                 onUpdateQuestPosition={updateQuestPosition}
                 onUpdateAssetPosition={updateAssetPosition}
+                worldName={worldName}
               />
             )}
           </main>
