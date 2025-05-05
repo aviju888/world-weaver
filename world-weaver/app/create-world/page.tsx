@@ -64,20 +64,18 @@ export default function CreateWorldPage() {
   useEffect(() => {
     if (!mapId) return;
   
-    // 1. Load quests and assets from localStorage
     const savedWorldDataRaw = localStorage.getItem('worldData');
     if (savedWorldDataRaw) {
       const savedWorldData = JSON.parse(savedWorldDataRaw);
   
       const worldAssets = savedWorldData[worldName] || {};
   
-      // Collect all assets
       const loadedAssets: Asset[] = [];
       ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
         const typeAssets = worldAssets[typeKey] || {};
         Object.entries(typeAssets).forEach(([name, data]: any) => {
           loadedAssets.push({
-            id: name, // or use a better id if you store one
+            id: name,
             name,
             type:
               typeKey === 'asset-npc'
@@ -85,14 +83,13 @@ export default function CreateWorldPage() {
                 : typeKey === 'asset-location'
                 ? 'location'
                 : 'item',
-            position: undefined,
+            position: data.position ? data.position : undefined
           });
         });
       });
   
       setAssets(loadedAssets);
     }
-  
   }, [mapId, worldName]);
 
 
@@ -125,15 +122,61 @@ export default function CreateWorldPage() {
     ));
   };
 
-  const updateAssetPosition = (assetId: string, position: { x: number, y: number }) => {
-    setAssets(assets.map(asset =>
+  const updateAssetPosition = (assetId: string, position: { top: string, left: string }) => {
+    const updatedAssets = assets.map(asset =>
       asset.id === assetId ? { ...asset, position } : asset
-    ));
+    );
+    setAssets(updatedAssets);
+  
+    const localDataRaw = localStorage.getItem('worldData');
+    const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+  
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return;
+  
+    let assetCategory = '';
+    switch (asset.type) {
+      case 'character': assetCategory = 'asset-npc'; break;
+      case 'location': assetCategory = 'asset-location'; break;
+      case 'item': assetCategory = 'asset-item'; break;
+      default: return;
+    }
+  
+    if (!localData[worldName]) return;
+    if (!localData[worldName][assetCategory]) return;
+    if (!localData[worldName][assetCategory][asset.name]) return;
+  
+    localData[worldName][assetCategory][asset.name].position = position;
+  
+    localStorage.setItem('worldData', JSON.stringify(localData));
   };
 
   const handleDragStart = (e: React.DragEvent, item: Quest | Asset, type: 'quest' | 'asset') => {
     e.dataTransfer.setData('application/json', JSON.stringify({ id: item.id, type }));
-    // Optionally, set drag image or effect
+  
+    // --- Create a small drag preview ---
+    const ghost = document.createElement('div');
+    ghost.style.width = '24px';
+    ghost.style.height = '24px';
+    ghost.style.backgroundColor = type === 'quest' ? '#8b5cf6' : '#059669'; // purple or emerald
+    ghost.style.borderRadius = '50%';
+    ghost.style.display = 'flex';
+    ghost.style.alignItems = 'center';
+    ghost.style.justifyContent = 'center';
+    ghost.style.color = 'white';
+    ghost.style.fontSize = '14px';
+    ghost.style.fontWeight = 'bold';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '9999';
+    ghost.innerText = type === 'quest' ? 'Q' : 'A';
+    document.body.appendChild(ghost);
+  
+    e.dataTransfer.setDragImage(ghost, 12, 12);
+  
+    // Remove the ghost after a tick (Firefox workaround)
+    setTimeout(() => {
+      document.body.removeChild(ghost);
+    }, 0);
   };
 
   const refreshAssetsFromStorage = () => {
@@ -339,6 +382,13 @@ export default function CreateWorldPage() {
           refreshAssetsFromStorage();
         }}
         worldName={worldName}
+        initialData={currentAsset ? {
+          id: currentAsset.id,
+          name: currentAsset.name,
+          type: currentAsset.type === 'character' ? 'NPC'
+            : currentAsset.type === 'location' ? 'Location'
+              : 'Item',
+        } : undefined}
       />
     </div>
   );

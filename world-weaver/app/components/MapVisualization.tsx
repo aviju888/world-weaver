@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-// import MapPin from './MapPin';
+import MapPin from './MapPin';
 import Sidebar from './Sidebar';
 
 type Quest = {
@@ -162,7 +162,7 @@ export default function MapVisualization({
                 draggable={false}
               />
 
-              {quests.filter(q => q.position?.top && q.position?.left).map(quest => (
+              {/* {quests.filter(q => q.position?.top && q.position?.left).map(quest => (
                 <MapPin
                   key={`quest-${quest.id}`}
                   top={quest.position!.top}
@@ -172,7 +172,7 @@ export default function MapVisualization({
                   onClick={() => handlePinClick(quest, 'quest')}
                   isSelected={selectedItem?.type === 'quest' && selectedItem?.data.id === quest.id}
                 />
-              ))}
+              ))} */}
 
               {assets.filter(a => a.position?.top && a.position?.left).map(asset => (
                 <MapPin

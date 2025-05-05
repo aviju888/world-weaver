@@ -44,15 +44,55 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
   }, [activeTab]);
 
   useEffect(() => {
-    if (!isOpen) {
-      // Reset states when modal closes
-      setCards([]);
-      setAttributeContent('');
-      setSelectedAttribute(getAttributeOptions(activeTab)[0]);
-      setIsLoading(false);
-      setError(null);
+    if (isOpen) {
+      if (initialData) {
+        setName(initialData.name || '');
+        setActiveTab(initialData.type || 'NPC');
+  
+        // LOAD FROM LOCALSTORAGE
+        const localDataRaw = localStorage.getItem('worldData');
+        const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+  
+        let assetCategory = '';
+        switch (initialData.type) {
+          case 'NPC': assetCategory = 'asset-npc'; break;
+          case 'Location': assetCategory = 'asset-location'; break;
+          case 'Item': assetCategory = 'asset-item'; break;
+          default: assetCategory = 'asset-npc';
+        }
+  
+        const saved = localData[worldName]?.[assetCategory]?.[initialData.name];
+  
+        if (saved) {
+          const loadedCards = (saved.cards || []).map((c: any) => ({
+            id: c.id || crypto.randomUUID(),
+            image: c.image || '',
+            text: c.text || '',
+            title: c.title || '',
+            editing: false
+          }));
+          setCards(loadedCards);
+        } else {
+          setCards([]);
+        }
+  
+        setAttributeContent('');
+        setSelectedAttribute(getAttributeOptions(initialData.type || 'NPC')[0]);
+        setIsLoading(false);
+        setError(null);
+  
+      } else {
+        // Fresh state for new asset
+        setName('');
+        setActiveTab('NPC');
+        setCards([]);
+        setAttributeContent('');
+        setSelectedAttribute(getAttributeOptions('NPC')[0]);
+        setIsLoading(false);
+        setError(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData, worldName]);
 
   const handleAddToNotes = () => {
     if (!attributeContent.trim()) return;
