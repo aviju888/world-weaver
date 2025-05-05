@@ -61,18 +61,6 @@ export default function CreateWorldPage() {
     }
   }, [mapId]);
 
-  // Placeholder data for AI-generated suggestions
-  const suggestedQuests = [
-    { id: 'q1', title: 'The Lost Artifact', description: 'Find the ancient artifact hidden in the eastern mountains.' },
-    { id: 'q2', title: 'Sea Monster Hunt', description: 'Defeat the legendary sea monster terrorizing coastal villages.' },
-    { id: 'q3', title: 'Political Intrigue', description: 'Navigate the complex political landscape and prevent a war.' }
-  ];
-
-  const suggestedAssets = [
-    { id: 'a1', name: 'Elder Dragon', type: 'character' as const, description: 'An ancient dragon that guards forgotten knowledge.' },
-    { id: 'a2', name: 'Desert Town', type: 'location' as const, description: 'A small settlement near an oasis in the desert.' },
-    { id: 'a3', name: 'Enchanted Sword', type: 'item' as const, description: 'A magical sword that glows in the presence of evil.' }
-  ];
 
   const addQuest = (quest: Quest) => {
     setQuests([...quests, quest]);
@@ -157,20 +145,20 @@ export default function CreateWorldPage() {
             {/* Toggle Tabs */}
             <div className="flex mb-6 gap-2" role="tablist">
               <button
-                className={`flex-1 py-2 rounded-lg font-semibold transition-all duration-300 ${sidebarTab === 'quests' ? 'bg-emerald-100 text-emerald-700 shadow' : 'bg-gray-100 text-gray-500 hover:text-emerald-700'}`}
-                onClick={() => setSidebarTab('quests')}
-                role="tab"
-                aria-selected={sidebarTab === 'quests'}
-              >
-                Quests
-              </button>
-              <button
                 className={`flex-1 py-2 rounded-lg font-semibold transition-all duration-300 ${sidebarTab === 'assets' ? 'bg-emerald-100 text-emerald-700 shadow' : 'bg-gray-100 text-gray-500 hover:text-emerald-700'}`}
                 onClick={() => setSidebarTab('assets')}
                 role="tab"
                 aria-selected={sidebarTab === 'assets'}
               >
                 Assets
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg font-semibold transition-all duration-300 ${sidebarTab === 'quests' ? 'bg-emerald-100 text-emerald-700 shadow' : 'bg-gray-100 text-gray-500 hover:text-emerald-700'}`}
+                onClick={() => setSidebarTab('quests')}
+                role="tab"
+                aria-selected={sidebarTab === 'quests'}
+              >
+                Quests
               </button>
             </div>
             {/* Animated Content Switch */}
@@ -223,6 +211,7 @@ export default function CreateWorldPage() {
                 {/* Assets Section */}
                 <div>
                   <h3 className="text-lg font-bold text-emerald-700 mb-2 tracking-wide">Assets</h3>
+                  {/* dynamic display */}
                   <div className="space-y-2 mb-2">
                     {assets.length > 0 ? assets.map(asset => (
                       <div
@@ -262,9 +251,9 @@ export default function CreateWorldPage() {
             </div>
           </aside>
           {/* Map Visualization */}
-          <main className="flex-1 bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-stretch rounded-tl-2xl relative">
+          <main className="flex-1 bg-gradient-to-br flex items-stretch rounded-tl-2xl relative">
             {sidebarTab === 'quests' ? (
-              <div className="w-full">
+              <div className="w-full h-full">
                 <QuestBoard />
               </div>
             ) : (
@@ -278,56 +267,6 @@ export default function CreateWorldPage() {
                 onUpdateAssetPosition={updateAssetPosition}
               />
             )}
-            {/* Floating Quick Summary Box - now larger and interactive */}
-            <div className="fixed bottom-8 right-8 bg-white/95 shadow-2xl rounded-2xl px-8 py-6 min-w-[340px] max-h-[60vh] z-40 border border-gray-200 backdrop-blur-lg animate-fade-in flex flex-col gap-4 overflow-y-auto">
-              <div className="font-bold text-lg text-gray-700 mb-2">World Overview</div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-emerald-700 text-base">Quests</span>
-                  <span className="text-xs text-gray-500">({quests.length})</span>
-                </div>
-                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto">
-                  {quests.length === 0 ? (
-                    <div className="text-xs text-gray-400">No quests yet</div>
-                  ) : (
-                    quests.map(q => (
-                      <div
-                        key={q.id}
-                        className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 shadow-sm flex items-center gap-2 cursor-grab hover:bg-emerald-100 transition"
-                        draggable
-                        onDragStart={e => handleDragStart(e, q, 'quest')}
-                      >
-                        <span className="font-semibold text-emerald-800 text-sm">{q.title}</span>
-                        <span className="text-xs text-gray-500 truncate">{q.description}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-blue-700 text-base">Assets</span>
-                  <span className="text-xs text-gray-500">({assets.length})</span>
-                </div>
-                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto">
-                  {assets.length === 0 ? (
-                    <div className="text-xs text-gray-400">No assets yet</div>
-                  ) : (
-                    assets.map(a => (
-                      <div
-                        key={a.id}
-                        className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 shadow-sm flex items-center gap-2 cursor-grab hover:bg-blue-100 transition"
-                        draggable
-                        onDragStart={e => handleDragStart(e, a, 'asset')}
-                      >
-                        <span className="font-semibold text-blue-800 text-sm">{a.name}</span>
-                        <span className="text-xs text-gray-500 truncate">{a.description}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
           </main>
         </div>
       )}

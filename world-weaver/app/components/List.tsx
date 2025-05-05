@@ -179,7 +179,7 @@ const FlowCanvasInner = () => {
   const filteredNodes = nodes.filter(node => !minimizedNodes[node.id]);
 
   return (
-    <div className="h-screen bg-gray-900 flex items-center justify-center">
+    <div className="h-full bg-gray-900 flex items-center justify-center">
       <div 
         className="h-full w-full bg-white shadow-xl overflow-hidden relative"
         onContextMenu={handleRightClick}

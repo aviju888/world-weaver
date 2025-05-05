@@ -121,7 +121,7 @@ export default function MapVisualization({
 
   return (
     <div className="relative w-full h-full flex">
-      <Sidebar
+      {/* <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         selectedItem={selectedItem}
@@ -132,7 +132,7 @@ export default function MapVisualization({
         onPlaceClick={(item, type) => startPlacingItem(item, type)}
         quests={quests}
         assets={assets}
-      />
+      /> */}
 
       <div className={`flex-1 relative`} style={{ minHeight: 400 }}>
         <TransformWrapper
