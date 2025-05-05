@@ -343,7 +343,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor" onSave={handleSave}>
+    <EditorModal isOpen={isOpen} onClose={onClose} title="Asset Editor" onSave={handleSave} disableBackdropClose={true}>
       <div className="flex flex-col space-y-6">
         <div className="text-gray-700 text-sm font-medium">
           {worldName || "Your World"}

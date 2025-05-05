@@ -45,6 +45,49 @@ export default function CreateWorldPage() {
   const searchParams = useSearchParams();
   const mapId = searchParams.get('mapId');
 
+  const [flowNodes, setFlowNodes] = useState<any[]>([]);
+  const [flowEdges, setFlowEdges] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const loadFlow = () => {
+      const savedFlow = localStorage.getItem('flow-data');
+      if (savedFlow) {
+        const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedFlow);
+        setFlowNodes(savedNodes || []);
+        setFlowEdges(savedEdges || []);
+      } else {
+        setFlowNodes([]);
+        setFlowEdges([]);
+      }
+    };
+  
+    loadFlow();
+  
+    // Listen to localStorage changes across tabs or within same app
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'flow-data') {
+        loadFlow();
+      }
+    };
+  
+    window.addEventListener('storage', handleStorage);
+  
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      const savedFlow = localStorage.getItem('flow-data');
+      if (savedFlow) {
+        const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedFlow);
+        setFlowNodes(savedNodes || []);
+        setFlowEdges(savedEdges || []);
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   // Load the map from localStorage using the mapId
   useEffect(() => {
     if (mapId) {
@@ -63,7 +106,7 @@ export default function CreateWorldPage() {
   }, [mapId]);
 
   useEffect(() => {
-    if (!mapId) return;
+    if (!mapId || !worldName) return;
 
     const savedWorldDataRaw = localStorage.getItem('worldData');
     if (savedWorldDataRaw) {
@@ -202,6 +245,50 @@ export default function CreateWorldPage() {
     setAssets(newAssets);
   };
 
+  const formatNodeTitle = (node: any) => {
+    return node.data.title;
+  };
+  
+  const renderFlatChildren = (parentId: string, level: number): JSX.Element | null => {
+    const childEdges = flowEdges.filter(edge => edge.source === parentId);
+    if (childEdges.length === 0) return null;
+  
+    return (
+      <ul className="space-y-1">
+        {childEdges.map(edge => {
+          const childNode = flowNodes.find(n => n.id === edge.target && !n.data.isAsset);
+          if (!childNode) return null;
+          return (
+            <li key={childNode.id} className={`ml-${level * 4}`}>
+              {'└' + '─'.repeat(level)} {formatNodeTitle(childNode)}
+              {renderFlatChildren(childNode.id, level + 1)}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const renderChildren = (parentId: string, level: number): JSX.Element | null => {
+    const childEdges = flowEdges.filter(edge => edge.source === parentId);
+    if (childEdges.length === 0) return null;
+  
+    return (
+      <ul className={`list-disc list-inside ml-${level * 4}`}>
+        {childEdges.map(edge => {
+          const childNode = flowNodes.find(n => n.id === edge.target && !n.data.isAsset);
+          if (!childNode) return null;
+          return (
+            <li key={childNode.id}>
+              {childNode.data.title}
+              {renderChildren(childNode.id, level + 1)}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-emerald-50 text-gray-800">
       <header className="bg-gray-800 p-4 shadow-sm">
@@ -258,44 +345,26 @@ export default function CreateWorldPage() {
               >
                 {/* Quests Section */}
                 <div className="mb-8">
-                  <h3 className="text-lg font-bold text-emerald-700 mb-2 tracking-wide">Quests</h3>
-                  <div className="space-y-2 mb-2">
-                    {quests.length > 0 ? quests.map(quest => (
-                      <div
-                        key={quest.id}
-                        className="bg-white border border-gray-100 rounded-lg px-4 py-3 shadow-sm flex flex-col gap-1 hover:shadow-md transition cursor-grab active:scale-95"
-                        draggable
-                        onDragStart={e => handleDragStart(e, quest, 'quest')}
-                        onClick={() => openQuestEditor(quest)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Edit ${quest.title}`}
-                      >
-                        <span className="font-semibold text-gray-800 text-base">{quest.title}</span>
-                        <span className="text-xs text-gray-500">{quest.description}</span>
-                      </div>
-                    )) : (
-                      <div className="text-xs text-gray-400 text-center py-2">No quests added yet</div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      const newQuest = {
-                        id: `quest-${Date.now()}`,
-                        title: 'New Quest',
-                        description: 'Add details to this quest'
-                      };
-                      addQuest(newQuest);
-                      openQuestEditor(newQuest);
-                    }}
-                    className="w-full py-2 mt-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-emerald-700 font-semibold text-sm transition"
-                  >
-                    + Create New Quest
-                  </button>
-                  
-
-                </div>
+  <h3 className="text-lg font-bold text-emerald-700 mb-2 tracking-wide">Quests</h3>
+  <div className="space-y-1 mb-2 text-sm text-gray-800">
+    {flowNodes.length > 0 ? (
+      <ul className="space-y-1">
+        {flowNodes
+          .filter(node => !node.data.isAsset && !flowEdges.some(edge => edge.target === node.id))
+          .map(node => (
+            <li key={node.id}>
+              {formatNodeTitle(node, 0)}
+              {renderFlatChildren(node.id, 1)}
+            </li>
+          ))}
+      </ul>
+    ) : (
+      <div className="text-xs text-gray-400 text-center py-2">No quests added yet</div>
+    )}
+  </div>
+</div>
               </div>
+
               <div
                 className={`absolute w-full top-0 left-0 transition-opacity duration-500 ${sidebarTab === 'assets' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}
               >

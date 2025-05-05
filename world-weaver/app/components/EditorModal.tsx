@@ -9,9 +9,10 @@ interface EditorModalProps {
   onSave?: () => void;
   title: string;
   children: React.ReactNode;
+  disableBackdropClose?: boolean;
 }
 
-export default function EditorModal({ isOpen, onClose, onSave, title, children }: EditorModalProps) {
+export default function EditorModal({ isOpen, onClose, onSave, title, children, disableBackdropClose }: EditorModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -28,10 +29,10 @@ export default function EditorModal({ isOpen, onClose, onSave, title, children }
   }, [isOpen]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (!disableBackdropClose && e.target === e.currentTarget) {
       onClose();
     }
-  }, [onClose]);
+  }, [onClose, disableBackdropClose]);
 
   if (!mounted || !isOpen) return null;
 
