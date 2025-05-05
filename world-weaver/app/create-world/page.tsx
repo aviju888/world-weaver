@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import QuestEditor from '../components/QuestEditor';
 import AssetEditor from '../components/AssetEditor';
 import MapVisualization from '../components/MapVisualization';
+import QuestBoard from '../components/QuestBoard';
 
 type Quest = {
   id: string;
@@ -146,7 +147,6 @@ export default function CreateWorldPage() {
               <div className="bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden mb-2 h-32">
                 <img src={currentMap.url} alt={currentMap.name} className="max-h-full object-contain" />
               </div>
-              <p className="text-xs text-gray-400 mb-2 text-center">AI analysis has detected possible points of interest.</p>
               <button
                 onClick={handleSave}
                 className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow transition mb-2"
@@ -214,26 +214,7 @@ export default function CreateWorldPage() {
                   >
                     + Create New Quest
                   </button>
-                  {/* AI Suggestions */}
-                  <div className="mt-4">
-                    <h4 className="text-xs font-bold uppercase text-gray-400 mb-2 tracking-wide">Suggestions</h4>
-                    <div className="flex flex-col gap-2">
-                      {suggestedQuests.map(quest => (
-                        <div key={quest.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                          <div className="flex-1 cursor-pointer" onClick={() => openQuestEditor(quest)}>
-                            <span className="font-semibold text-gray-700 text-sm">{quest.title}</span>
-                            <span className="block text-xs text-gray-400">{quest.description}</span>
-                          </div>
-                          <button
-                            onClick={() => addQuest(quest)}
-                            className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded text-xs font-semibold transition"
-                          >
-                            Add
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+
                 </div>
               </div>
               <div
@@ -276,41 +257,27 @@ export default function CreateWorldPage() {
                   >
                     + Create New Asset
                   </button>
-                  {/* AI Suggestions */}
-                  <div className="mt-4">
-                    <h4 className="text-xs font-bold uppercase text-gray-400 mb-2 tracking-wide">Suggestions</h4>
-                    <div className="flex flex-col gap-2">
-                      {suggestedAssets.map(asset => (
-                        <div key={asset.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                          <div className="flex-1 cursor-pointer" onClick={() => openAssetEditor(asset)}>
-                            <span className="font-semibold text-gray-700 text-sm">{asset.name}</span>
-                            <span className="block text-xs text-gray-400">{asset.description}</span>
-                          </div>
-                          <button
-                            onClick={() => addAsset(asset)}
-                            className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded text-xs font-semibold transition"
-                          >
-                            Add
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </aside>
           {/* Map Visualization */}
           <main className="flex-1 bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-stretch rounded-tl-2xl relative">
-            <MapVisualization
-              mapUrl={currentMap.url}
-              quests={quests}
-              assets={assets}
-              onQuestClick={openQuestEditor}
-              onAssetClick={openAssetEditor}
-              onUpdateQuestPosition={updateQuestPosition}
-              onUpdateAssetPosition={updateAssetPosition}
-            />
+            {sidebarTab === 'quests' ? (
+              <div className="w-full">
+                <QuestBoard />
+              </div>
+            ) : (
+              <MapVisualization
+                mapUrl={currentMap.url}
+                quests={quests}
+                assets={assets}
+                onQuestClick={openQuestEditor}
+                onAssetClick={openAssetEditor}
+                onUpdateQuestPosition={updateQuestPosition}
+                onUpdateAssetPosition={updateAssetPosition}
+              />
+            )}
             {/* Floating Quick Summary Box - now larger and interactive */}
             <div className="fixed bottom-8 right-8 bg-white/95 shadow-2xl rounded-2xl px-8 py-6 min-w-[340px] max-h-[60vh] z-40 border border-gray-200 backdrop-blur-lg animate-fade-in flex flex-col gap-4 overflow-y-auto">
               <div className="font-bold text-lg text-gray-700 mb-2">World Overview</div>
@@ -383,7 +350,7 @@ export default function CreateWorldPage() {
           id: currentAsset.id,
           name: currentAsset.name || '',
           type: currentAsset.type === 'character' ? 'NPC' :
-                currentAsset.type === 'location' ? 'Location' : 'Item',
+            currentAsset.type === 'location' ? 'Location' : 'Item',
           bio: currentAsset.description || '',
         } : undefined}
         worldName={worldName}

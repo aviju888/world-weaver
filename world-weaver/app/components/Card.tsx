@@ -11,21 +11,19 @@ const CustomCardNode = ({ data, id }: { data: CustomNodeData; id: string }) => {
   return (
     <div 
       style={{ 
-        border: `4px solid ${data.color}`,
-        padding: '1rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        border: `2px solid ${data.color}`,
         background: 'white'
       }}
+      className="p-2 rounded-md shadow-sm w-[10vw] max-w-[200px] min-w-[140px] text-gray-800"
     >
-      <div className="text-center font-semibold p-2 rounded mb-2">
+      <div className="text-center font-medium text-sm p-1 mb-1">
         {data.title}
       </div>
       <textarea 
         value={data.text}
         onChange={(e) => data.onTextChange(e.target.value)}
         placeholder="Description"
-        className="border p-2 rounded w-full h-16"
+        className="border border-gray-200 p-1 rounded-md w-full min-h-[40px] text-xs resize-none"
       />
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />

@@ -179,9 +179,9 @@ const FlowCanvasInner = () => {
   const filteredNodes = nodes.filter(node => !minimizedNodes[node.id]);
 
   return (
-    <div className="h-screen w-screen bg-gray-900 flex items-center justify-center">
+    <div className="h-screen bg-gray-900 flex items-center justify-center">
       <div 
-        className="h-[95vh] w-[95vw] bg-white rounded-3xl shadow-xl overflow-hidden relative"
+        className="h-full w-full bg-white shadow-xl overflow-hidden relative"
         onContextMenu={handleRightClick}
       >
         <ReactFlow
@@ -196,7 +196,8 @@ const FlowCanvasInner = () => {
             const sourceNode = nodes.find(n => n.id === connection.source);
             return connection.source !== connection.target && !sourceNode?.data.isAsset;
           }}
-          fitView
+          // fitView
+          defaultViewport={{ x: 300, y: 300, zoom: 0.95 }}
         >
           <Background />
           <MiniMap />
