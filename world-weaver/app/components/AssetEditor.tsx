@@ -259,15 +259,6 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
     }
   };
 
-  // const attributeOptions = [
-  //   'Race & Species',
-  //   'Background',
-  //   'Personality',
-  //   'Ideals',
-  //   'Flaws & Quirks',
-  //   'Notable Relationships',
-  //   'Other',
-  // ];
 
   const getAttributeOptions = (tab: AssetType) => {
     switch (tab) {

@@ -19,7 +19,7 @@ type Asset = {
   id: string;
   name: string;
   type: 'character' | 'item' | 'location';
-  description: string;
+  // description: string;
   position?: { x: number, y: number };
 };
 
@@ -39,7 +39,7 @@ export default function CreateWorldPage() {
   const [isAssetEditorOpen, setIsAssetEditorOpen] = useState(false);
   const [currentQuest, setCurrentQuest] = useState<Quest | null>(null);
   const [currentAsset, setCurrentAsset] = useState<Asset | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<'quests' | 'assets'>('quests');
+  const [sidebarTab, setSidebarTab] = useState<'quests' | 'assets'>('assets');
 
   const searchParams = useSearchParams();
   const mapId = searchParams.get('mapId');
@@ -60,6 +60,40 @@ export default function CreateWorldPage() {
       }
     }
   }, [mapId]);
+
+  useEffect(() => {
+    if (!mapId) return;
+  
+    // 1. Load quests and assets from localStorage
+    const savedWorldDataRaw = localStorage.getItem('worldData');
+    if (savedWorldDataRaw) {
+      const savedWorldData = JSON.parse(savedWorldDataRaw);
+  
+      const worldAssets = savedWorldData[worldName] || {};
+  
+      // Collect all assets
+      const loadedAssets: Asset[] = [];
+      ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
+        const typeAssets = worldAssets[typeKey] || {};
+        Object.entries(typeAssets).forEach(([name, data]: any) => {
+          loadedAssets.push({
+            id: name, // or use a better id if you store one
+            name,
+            type:
+              typeKey === 'asset-npc'
+                ? 'character'
+                : typeKey === 'asset-location'
+                ? 'location'
+                : 'item',
+            position: undefined,
+          });
+        });
+      });
+  
+      setAssets(loadedAssets);
+    }
+  
+  }, [mapId, worldName]);
 
 
   const addQuest = (quest: Quest) => {
@@ -100,6 +134,27 @@ export default function CreateWorldPage() {
   const handleDragStart = (e: React.DragEvent, item: Quest | Asset, type: 'quest' | 'asset') => {
     e.dataTransfer.setData('application/json', JSON.stringify({ id: item.id, type }));
     // Optionally, set drag image or effect
+  };
+
+  const refreshAssetsFromStorage = () => {
+    const localDataRaw = localStorage.getItem('worldData');
+    const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+
+    const categories = ['asset-npc', 'asset-location', 'asset-item'];
+    const newAssets: Asset[] = [];
+
+    categories.forEach(cat => {
+      const items = localData[worldName]?.[cat] || {};
+      Object.entries(items).forEach(([name, value]: any) => {
+        newAssets.push({
+          id: `asset-${name}`, // use name or id scheme
+          name,
+          type: cat === 'asset-npc' ? 'character' : cat === 'asset-location' ? 'location' : 'item',
+        });
+      });
+    });
+
+    setAssets(newAssets);
   };
 
   return (
@@ -211,6 +266,15 @@ export default function CreateWorldPage() {
                 {/* Assets Section */}
                 <div>
                   <h3 className="text-lg font-bold text-emerald-700 mb-2 tracking-wide">Assets</h3>
+                  <button
+                    onClick={() => {
+                      setCurrentAsset(null);  // no pre-fill
+                      setIsAssetEditorOpen(true);
+                    }}
+                    className="w-full py-2 mt-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-emerald-700 font-semibold text-sm transition"
+                  >
+                    + Create New Asset
+                  </button>
                   {/* dynamic display */}
                   <div className="space-y-2 mb-2">
                     {assets.length > 0 ? assets.map(asset => (
@@ -225,27 +289,13 @@ export default function CreateWorldPage() {
                         aria-label={`Edit ${asset.name}`}
                       >
                         <span className="font-semibold text-gray-800 text-base">{asset.name}</span>
-                        <span className="text-xs text-gray-500">{asset.description}</span>
+                        {/* <span className="text-xs text-gray-500">{asset.description}</span> */}
                       </div>
                     )) : (
                       <div className="text-xs text-gray-400 text-center py-2">No assets added yet</div>
                     )}
                   </div>
-                  <button
-                    onClick={() => {
-                      const newAsset = {
-                        id: `asset-${Date.now()}`,
-                        name: 'New Asset',
-                        type: 'character' as const,
-                        description: 'Add details to this asset'
-                      };
-                      addAsset(newAsset);
-                      openAssetEditor(newAsset);
-                    }}
-                    className="w-full py-2 mt-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-emerald-700 font-semibold text-sm transition"
-                  >
-                    + Create New Asset
-                  </button>
+
                 </div>
               </div>
             </div>
@@ -284,14 +334,10 @@ export default function CreateWorldPage() {
       />
       <AssetEditor
         isOpen={isAssetEditorOpen}
-        onClose={() => setIsAssetEditorOpen(false)}
-        initialData={currentAsset ? {
-          id: currentAsset.id,
-          name: currentAsset.name || '',
-          type: currentAsset.type === 'character' ? 'NPC' :
-            currentAsset.type === 'location' ? 'Location' : 'Item',
-          bio: currentAsset.description || '',
-        } : undefined}
+        onClose={() => {
+          setIsAssetEditorOpen(false);
+          refreshAssetsFromStorage();
+        }}
         worldName={worldName}
       />
     </div>
