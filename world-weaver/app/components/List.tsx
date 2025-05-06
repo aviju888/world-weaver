@@ -62,7 +62,7 @@ const FlowCanvasInner = () => {
   const [selectedAsset, setSelectedAsset] = useState<Node | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
+  const [availableAssets, setAvailableAssets] = useState<string[]>([]);
   const searchParams = useSearchParams();
   const mapId = searchParams.get('mapId');
   const [worldName, setWorldName] = useState('');
@@ -85,29 +85,20 @@ const FlowCanvasInner = () => {
   // Load available assets for this world:
   useEffect(() => {
     if (!worldName) return;
-  
+
     const savedWorldDataRaw = localStorage.getItem('worldData');
     if (!savedWorldDataRaw) return;
-  
+
     const savedWorldData = JSON.parse(savedWorldDataRaw);
     const worldAssets = savedWorldData[worldName] || {};
-  
-    const assetList: Asset[] = [];
+
+    const assetNames: string[] = [];
     ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
       const typeAssets = worldAssets[typeKey] || {};
-      Object.entries(typeAssets).forEach(([name, data]: any) => {
-        assetList.push({
-          id: name,
-          name,
-          type: typeKey === 'asset-npc' ? 'character'
-               : typeKey === 'asset-location' ? 'location'
-               : 'item',
-          position: data.position
-        });
-      });
+      Object.keys(typeAssets).forEach(name => assetNames.push(name));
     });
-  
-    setAvailableAssets(assetList);
+
+    setAvailableAssets(assetNames);
   }, [worldName]);
 
   useEffect(() => {
