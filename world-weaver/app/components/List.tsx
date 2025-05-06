@@ -1,4 +1,5 @@
-// FlowCanvas.tsx
+'use client';
+
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import ReactFlow, {
@@ -16,6 +17,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import CustomCardNode from './Card';
 import SlidingPane from './QuestInfoSlider';
+import { useSearchParams } from 'next/navigation';
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -39,7 +41,7 @@ const defaultNodes: Node[] = [
       text: 'This is your world.',
       color: '#000000',
       isAsset: false,
-      onTextChange: () => {},
+      onTextChange: () => { },
     },
   },
 ];
@@ -59,6 +61,54 @@ const FlowCanvasInner = () => {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedAsset, setSelectedAsset] = useState<Node | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
+  const searchParams = useSearchParams();
+  const mapId = searchParams.get('mapId');
+  const [worldName, setWorldName] = useState('');
+
+  // Fetch world name from localStorage like your other pages do:
+  useEffect(() => {
+    if (mapId) {
+      const savedMapsJson = localStorage.getItem('worldWeaverMaps');
+      if (savedMapsJson) {
+        const savedMaps = JSON.parse(savedMapsJson);
+        const map = savedMaps.find((m: any) => m.id === mapId);
+        if (map) {
+          const nameWithoutExt = map.name.split('.').slice(0, -1).join('.');
+          setWorldName(nameWithoutExt || map.name);
+        }
+      }
+    }
+  }, [mapId]);
+
+  // Load available assets for this world:
+  useEffect(() => {
+    if (!worldName) return;
+  
+    const savedWorldDataRaw = localStorage.getItem('worldData');
+    if (!savedWorldDataRaw) return;
+  
+    const savedWorldData = JSON.parse(savedWorldDataRaw);
+    const worldAssets = savedWorldData[worldName] || {};
+  
+    const assetList: Asset[] = [];
+    ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
+      const typeAssets = worldAssets[typeKey] || {};
+      Object.entries(typeAssets).forEach(([name, data]: any) => {
+        assetList.push({
+          id: name,
+          name,
+          type: typeKey === 'asset-npc' ? 'character'
+               : typeKey === 'asset-location' ? 'location'
+               : 'item',
+          position: data.position
+        });
+      });
+    });
+  
+    setAvailableAssets(assetList);
+  }, [worldName]);
 
   useEffect(() => {
     const savedFlow = localStorage.getItem(storageKey);
@@ -91,7 +141,7 @@ const FlowCanvasInner = () => {
     if (!currentQuestType || !newQuestName.trim()) return;
     // const isAsset = currentQuestType.label === 'Asset';
     const newId = getId();
-    
+
     setNodes(nds => [...nds, {
       id: newId,
       type: 'customCard',
@@ -100,7 +150,7 @@ const FlowCanvasInner = () => {
         title: newQuestName,
         text: 'Write something here.',
         color: currentQuestType.color,
-        // isAsset,
+        assets: [],  // list of asset IDs
         onTextChange: (newText: string) => {
           setNodes(nodes => nodes.map(node =>
             node.id === newId ? { ...node, data: { ...node.data, text: newText } } : node
@@ -108,7 +158,7 @@ const FlowCanvasInner = () => {
         }
       },
     }]);
-    
+
     setNewQuestName('');
     setCurrentQuestType(null);
     setShowAddPopup(false);
@@ -143,7 +193,7 @@ const FlowCanvasInner = () => {
   const handleRightClick = (event: React.MouseEvent) => {
     event.preventDefault();
     if (!selectedNodeId) {
-      setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100});
+      setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100 });
       setShowPopup(true);
     }
   };
@@ -152,7 +202,7 @@ const FlowCanvasInner = () => {
     event.preventDefault();
     event.stopPropagation();
     setSelectedNodeId(node.id);
-    setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100});
+    setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100 });
     setShowPopup(true);
   };
 
@@ -172,14 +222,31 @@ const FlowCanvasInner = () => {
     [setEdges]
   );
 
-  const filteredEdges = edges.filter(edge => 
+  const filteredEdges = edges.filter(edge =>
     !(minimizedNodes[edge.source] || minimizedNodes[edge.target])
   );
   const filteredNodes = nodes.filter(node => !minimizedNodes[node.id]);
 
+  const popupWidth = 240; // make popup smaller
+  const popupHeight = 300;
+  
+  let adjustedX = popupPosition.x;
+  let adjustedY = popupPosition.y;
+  
+  if (typeof window !== 'undefined') {
+    if (adjustedX + popupWidth > window.innerWidth) {
+      adjustedX = window.innerWidth - popupWidth - 10; // 10px padding
+    }
+    if (adjustedY + popupHeight > window.innerHeight) {
+      adjustedY = window.innerHeight - popupHeight - 10;
+    }
+    adjustedX = Math.max(10, adjustedX); // prevent going off left
+    adjustedY = Math.max(10, adjustedY); // prevent going off top
+  }
+
   return (
     <div className="h-full bg-gray-900 flex items-center justify-center">
-      <div 
+      <div
         className="h-full w-full bg-white shadow-xl overflow-hidden relative"
         onContextMenu={handleRightClick}
       >
@@ -255,24 +322,60 @@ const FlowCanvasInner = () => {
         {showPopup && (
           <div
             ref={popupRef}
-            className="absolute bg-white p-4 rounded-lg shadow-lg z-[100] min-w-[200px]"
-            style={{ top: popupPosition.y, left: popupPosition.x }}
+            className="absolute bg-white p-3 rounded-lg shadow-lg z-[100] min-w-[180px] max-w-[260px] text-sm"
+            style={{ top: adjustedY, left: adjustedX, width: popupWidth }}
           >
-            <h2 className="text-lg font-semibold mb-2 text-gray-900">
-              {selectedNodeId ? "Node Options" : "Canvas Options"}
-            </h2>
-            
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold mb-2 text-gray-900">
+                {selectedNodeId ? "Node Options" : "Canvas Options"}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowPopup(false);
+                  setSelectedNodeId(null);
+                }}
+                className="text-gray-500 hover:text-gray-800 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
             {selectedNodeId ? (
               <>
-                {/* <button
-                  onClick={() => {
-                    setShowPane(true);
-                    setShowPopup(false);
-                  }}
-                  className="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  View Details
-                </button> */}
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-1">Linked Assets</h3>
+                  <div className="space-y-1 mb-2">
+                    {nodes.find(n => n.id === selectedNodeId)?.data.assets?.map((assetName: string) => (
+                      <div key={assetName} className="text-sm text-emerald-700">
+                        • {assetName}
+                      </div>
+                    )) || <div className="text-xs text-gray-400 italic">No assets linked</div>}
+                  </div>
+
+                  <h3 className="font-semibold mb-1">Add Asset</h3>
+                  <div className="space-y-1">
+                    {availableAssets.map(assetName => {
+                      const alreadyLinked = nodes.find(n => n.id === selectedNodeId)?.data.assets?.includes(assetName);
+                      return (
+                        <button
+                          key={assetName}
+                          disabled={alreadyLinked}
+                          className={`w-full text-left text-sm px-2 py-1 rounded ${alreadyLinked ? 'text-gray-400' : 'text-emerald-800 hover:bg-emerald-100'
+                            }`}
+                          onClick={() => {
+                            setNodes(nds => nds.map(node =>
+                              node.id === selectedNodeId
+                                ? { ...node, data: { ...node.data, assets: [...(node.data.assets || []), assetName] } }
+                                : node
+                            ));
+                            setShowPopup(false);
+                          }}
+                        >
+                          {assetName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     toggleAllDescendantsVisibility(selectedNodeId);
@@ -280,15 +383,15 @@ const FlowCanvasInner = () => {
                   }}
                   className="mt-2 w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                 >
-                  {getAllDescendants(selectedNodeId).every(id => minimizedNodes[id]) 
-                    ? 'Expand All Children' 
+                  {getAllDescendants(selectedNodeId).every(id => minimizedNodes[id])
+                    ? 'Expand All Children'
                     : 'Minimize All Children'}
                 </button>
                 <button
                   onClick={() => {
                     if (selectedNodeId) {
                       setNodes(nds => nds.filter(node => node.id !== selectedNodeId));
-                      setEdges(eds => eds.filter(edge => 
+                      setEdges(eds => eds.filter(edge =>
                         edge.source !== selectedNodeId && edge.target !== selectedNodeId
                       ));
                       setShowPopup(false);
@@ -311,14 +414,14 @@ const FlowCanvasInner = () => {
           </div>
         )}
 
-        <SlidingPane 
-          show={showPane} 
+        <SlidingPane
+          show={showPane}
           onClose={() => setShowPane(false)}
           edges={edges}
           nodes={nodes}
           onAssetClick={setSelectedAsset}
         />
-        
+
         {/* <AssetPane
           asset={selectedAsset}
           onClose={() => setSelectedAsset(null)}
