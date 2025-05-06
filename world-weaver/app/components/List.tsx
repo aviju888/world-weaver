@@ -66,6 +66,7 @@ const FlowCanvasInner = () => {
   const searchParams = useSearchParams();
   const mapId = searchParams.get('mapId');
   const [worldName, setWorldName] = useState('');
+  const [popupAsset, setPopupAsset] = useState<Asset | null>(null);
 
   // Fetch world name from localStorage like your other pages do:
   useEffect(() => {
@@ -99,6 +100,42 @@ const FlowCanvasInner = () => {
     });
 
     setAvailableAssets(assetNames);
+  }, [worldName]);
+
+  useEffect(() => {
+    const handleAssetClicked = (e: Event) => {
+      const assetName = (e as CustomEvent).detail;
+      if (!assetName || !worldName) return;
+  
+      const localDataRaw = localStorage.getItem('worldData');
+      const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+  
+      let foundAsset: Asset | null = null;
+      ['asset-npc', 'asset-location', 'asset-item'].forEach(typeKey => {
+        const typeAssets = localData[worldName]?.[typeKey] || {};
+        if (typeAssets[assetName]) {
+          foundAsset = {
+            id: assetName,
+            name: assetName,
+            type:
+              typeKey === 'asset-npc' ? 'character' :
+              typeKey === 'asset-location' ? 'location' :
+              'item',
+            position: typeAssets[assetName].position || undefined
+          };
+        }
+      });
+  
+      if (foundAsset) {
+        setPopupAsset(foundAsset);
+      }
+    };
+  
+    window.addEventListener('asset-clicked', handleAssetClicked as EventListener);
+  
+    return () => {
+      window.removeEventListener('asset-clicked', handleAssetClicked as EventListener);
+    };
   }, [worldName]);
 
   useEffect(() => {
@@ -418,6 +455,44 @@ const FlowCanvasInner = () => {
           onClose={() => setSelectedAsset(null)}
         /> */}
       </div>
+
+      {popupAsset && (
+  <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md border border-gray-300 rounded-lg shadow-lg p-4 max-w-xs z-30 overflow-y-auto max-h-[80%]">
+    <div className="flex justify-between items-center mb-2">
+      <h2 className="text-lg font-bold text-gray-800">{popupAsset.name}</h2>
+      <button
+        className="text-gray-500 hover:text-red-600 text-sm"
+        onClick={() => setPopupAsset(null)}
+      >
+        ✕
+      </button>
+    </div>
+    <div className="space-y-2">
+      {(() => {
+        const localDataRaw = localStorage.getItem('worldData');
+        const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+        let assetCategory = '';
+        switch (popupAsset.type) {
+          case 'character': assetCategory = 'asset-npc'; break;
+          case 'location': assetCategory = 'asset-location'; break;
+          case 'item': assetCategory = 'asset-item'; break;
+        }
+        const assetData = localData[worldName]?.[assetCategory]?.[popupAsset.name];
+        const cards = assetData?.cards || [];
+        return cards.length > 0 ? (
+          cards.map((card: any, index: number) => (
+            <div key={index} className="border rounded p-2 bg-white/70">
+              {card.title && <div className="font-semibold text-sm">{card.title}</div>}
+              {card.text && <div className="text-sm text-gray-700">{card.text}</div>}
+            </div>
+          ))
+        ) : (
+          <div className="text-sm text-gray-500">No notes or cards saved for this asset.</div>
+        );
+      })()}
+    </div>
+  </div>
+)}
     </div>
   );
 };

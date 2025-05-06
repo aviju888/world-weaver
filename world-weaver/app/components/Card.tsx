@@ -25,6 +25,23 @@ const CustomCardNode = ({ data, id }: { data: CustomNodeData; id: string }) => {
         placeholder="Description"
         className="border border-gray-200 p-1 rounded-md w-full min-h-[40px] text-xs resize-none"
       />
+      {data.assets && data.assets.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {data.assets.map((assetName: string) => (
+            <div
+              key={assetName}
+              className="text-xs text-emerald-700 cursor-pointer hover:underline"
+              onClick={() => {
+                // We'll wire up the click in Step 3
+                const event = new CustomEvent("asset-clicked", { detail: assetName });
+                window.dispatchEvent(event);
+              }}
+            >
+              {assetName}
+            </div>
+          ))}
+        </div>
+      )}
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </div>

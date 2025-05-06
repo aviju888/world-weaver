@@ -355,6 +355,9 @@ export default function CreateWorldPage() {
                 {/* Quests Section */}
                 <div className="mb-8">
   <h3 className="text-lg font-bold text-emerald-700 mb-2 tracking-wide">Quests</h3>
+  <div className="text-xs text-gray-500 mb-2 italic">
+  Tip: Right click on quests to link to assets or delete them.
+</div>
   <div className="space-y-1 mb-2 text-sm text-gray-800">
     {flowNodes.length > 0 ? (
       <ul className="space-y-1">
