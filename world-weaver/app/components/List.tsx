@@ -16,7 +16,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import CustomCardNode from './Card';
 import SlidingPane from './QuestInfoSlider';
-import AssetPane from './AssetPane';
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -27,7 +26,7 @@ const questTypes = [
   { label: 'Story Quest', color: '#99f6e4' },
   { label: 'Side Quest', color: '#86efac' },
   { label: 'Boss Fight', color: '#93c5fd' },
-  { label: 'Asset', color: '#6b7280' },
+  // { label: 'Asset', color: '#6b7280' },
 ];
 
 const defaultNodes: Node[] = [
@@ -90,7 +89,7 @@ const FlowCanvasInner = () => {
 
   const addCard = () => {
     if (!currentQuestType || !newQuestName.trim()) return;
-    const isAsset = currentQuestType.label === 'Asset';
+    // const isAsset = currentQuestType.label === 'Asset';
     const newId = getId();
     
     setNodes(nds => [...nds, {
@@ -101,7 +100,7 @@ const FlowCanvasInner = () => {
         title: newQuestName,
         text: 'Write something here.',
         color: currentQuestType.color,
-        isAsset,
+        // isAsset,
         onTextChange: (newText: string) => {
           setNodes(nodes => nodes.map(node =>
             node.id === newId ? { ...node, data: { ...node.data, text: newText } } : node
@@ -144,7 +143,7 @@ const FlowCanvasInner = () => {
   const handleRightClick = (event: React.MouseEvent) => {
     event.preventDefault();
     if (!selectedNodeId) {
-      setPopupPosition({ x: event.clientX, y: event.clientY });
+      setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100});
       setShowPopup(true);
     }
   };
@@ -153,7 +152,7 @@ const FlowCanvasInner = () => {
     event.preventDefault();
     event.stopPropagation();
     setSelectedNodeId(node.id);
-    setPopupPosition({ x: event.clientX, y: event.clientY });
+    setPopupPosition({ x: event.clientX - 450, y: event.clientY - 100});
     setShowPopup(true);
   };
 
@@ -218,9 +217,9 @@ const FlowCanvasInner = () => {
               Add {label}
             </button>
           ))}
-          <button onClick={() => localStorage.clear()}>
+          {/* <button onClick={() => localStorage.clear()}>
             Clear All Local Storage
-          </button>
+          </button> */}
         </div>
 
         {showAddPopup && (
@@ -265,7 +264,7 @@ const FlowCanvasInner = () => {
             
             {selectedNodeId ? (
               <>
-                <button
+                {/* <button
                   onClick={() => {
                     setShowPane(true);
                     setShowPopup(false);
@@ -273,7 +272,7 @@ const FlowCanvasInner = () => {
                   className="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   View Details
-                </button>
+                </button> */}
                 <button
                   onClick={() => {
                     toggleAllDescendantsVisibility(selectedNodeId);
@@ -320,10 +319,10 @@ const FlowCanvasInner = () => {
           onAssetClick={setSelectedAsset}
         />
         
-        <AssetPane
+        {/* <AssetPane
           asset={selectedAsset}
           onClose={() => setSelectedAsset(null)}
-        />
+        /> */}
       </div>
     </div>
   );
