@@ -249,7 +249,11 @@ export default function CreateWorldPage() {
     return node.data.title;
   };
   
-  const renderFlatChildren = (parentId: string, level: number): JSX.Element | null => {
+  const renderFlatChildren = (
+    parentId: string,
+    level: number,
+    visited = new Set<string>()
+  ): JSX.Element | null => {
     const childEdges = flowEdges.filter(edge => edge.source === parentId);
     if (childEdges.length === 0) return null;
   
@@ -258,10 +262,15 @@ export default function CreateWorldPage() {
         {childEdges.map(edge => {
           const childNode = flowNodes.find(n => n.id === edge.target && !n.data.isAsset);
           if (!childNode) return null;
+  
+          // If we've already rendered this node, skip to prevent repeats
+          if (visited.has(childNode.id)) return null;
+          visited.add(childNode.id);
+  
           return (
             <li key={childNode.id} className={`ml-${level * 4}`}>
-              {'└' + '─'.repeat(level)} {formatNodeTitle(childNode)}
-              {renderFlatChildren(childNode.id, level + 1)}
+              {'└' + '─'.repeat(level)} {childNode.data.title}
+              {renderFlatChildren(childNode.id, level + 1, visited)}
             </li>
           );
         })}
@@ -350,11 +359,18 @@ export default function CreateWorldPage() {
     {flowNodes.length > 0 ? (
       <ul className="space-y-1">
         {flowNodes
-          .filter(node => !node.data.isAsset && !flowEdges.some(edge => edge.target === node.id))
+          .filter(node => {
+            if (node.data.isAsset) return false;
+            const hasIncomingEdge = flowEdges.some(edge => edge.target === node.id);
+            const sourceExists = flowEdges
+              .filter(edge => edge.target === node.id)
+              .every(edge => flowNodes.find(n => n.id === edge.source));
+            return !hasIncomingEdge || !sourceExists;
+          })
           .map(node => (
             <li key={node.id}>
-              {formatNodeTitle(node, 0)}
-              {renderFlatChildren(node.id, 1)}
+              {formatNodeTitle(node)}
+              {renderFlatChildren(node.id, 1, new Set([node.id]))}
             </li>
           ))}
       </ul>
