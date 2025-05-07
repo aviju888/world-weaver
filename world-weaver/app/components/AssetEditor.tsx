@@ -61,7 +61,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
           default: assetCategory = 'asset-npc';
         }
   
-        const saved = localData[worldName]?.[assetCategory]?.[initialData.name];
+        const saved = localData[worldName]?.[assetCategory]?.[name];
   
         if (saved) {
           const loadedCards = (saved.cards || []).map((c: any) => ({
@@ -232,7 +232,7 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
       alert("Please enter a name before saving.");
       return false;
     }
-
+  
     const assetData = {
       name,
       cards: cards.map(({ id, image, text, title }) => ({
@@ -242,14 +242,14 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
         title,
       })),
     };
-
+  
     const localDataRaw = localStorage.getItem('worldData');
     const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
-
+  
     if (!localData[worldName]) {
       localData[worldName] = {};
     }
-
+  
     // Determine the correct category based on activeTab
     let assetCategory = '';
     switch (activeTab) {
@@ -265,15 +265,23 @@ export default function AssetEditor({ isOpen, onClose, initialData, worldName }:
       default:
         assetCategory = 'asset-npc'; // fallback
     }
-
+  
     if (!localData[worldName][assetCategory]) {
       localData[worldName][assetCategory] = {};
     }
-
-    localData[worldName][assetCategory][name] = assetData;
-
+  
+    // preserve the previous position and other metadata
+    const previous = localData[worldName][assetCategory][name] || {};
+    const preservedPosition = previous.position || null;
+  
+    localData[worldName][assetCategory][name] = {
+      ...previous,
+      ...assetData,
+      ...(preservedPosition ? { position: preservedPosition } : {})  // force keep position even if overwritten
+    };
+  
     localStorage.setItem('worldData', JSON.stringify(localData));
-
+  
     alert(`${activeTab} "${name}" saved to world "${worldName}"`);
     return true;
   };
