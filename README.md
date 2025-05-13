@@ -3,14 +3,13 @@
 
 A tool for RPG players and storytellers, to assist in the creation and managing of fantasy worlds, quests, and game assets.
 
-1) Design game worlds by uploading and annotating maps
-2) Create branching quest lines with a visual editor
-3) Build a database of characters, locations, and items
-4) Generate content using AI to fill in details
-5) Organize everything in one place
-
 ## Features
 
+- Design game worlds by uploading and annotating maps
+- Create branching quest lines with a visual editor
+- Build a database of characters, locations, and items
+- Generate content using AI to fill in details
+- Organize everything in one place
 - Upload and manage world maps
 - Create quests (Main, Story, Side, Boss)
 - Manage game assets (NPCs, Locations, Items)
