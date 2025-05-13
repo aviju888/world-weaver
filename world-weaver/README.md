@@ -1,8 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# World Weaver
+### *"Build your world. Weave your quests."*
+
+A tool for RPG players and storytellers, to assist in the creation and managing of fantasy worlds, quests, and game assets.
+
+## What World Weaver Does
+
+World Weaver helps you:
+- Design game worlds by uploading and annotating maps
+- Create branching quest lines with a visual editor
+- Build a database of characters, locations, and items
+- Generate content using AI to fill in details
+- Organize everything in one place
+
+## Features
+
+- Upload and manage world maps
+- Create quests (Main, Story, Side, Boss)
+- Manage game assets (NPCs, Locations, Items)
+- AI-powered content generation
+- Visual quest flow editor
+- Interactive map placement
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +35,41 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to start.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Create World**
+   - Upload a map
+   - Name your world
 
-## Learn More
+2. **Create Quests**
+   - Add quest details
+   - Set objectives and rewards
+   - Connect quests in the flow editor
 
-To learn more about Next.js, take a look at the following resources:
+3. **Add Assets**
+   - Create NPCs, locations, and items
+   - Add descriptions and properties
+   - Place on the map
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **AI Features**
+   - Generate names
+   - Create descriptions
+   - Expand content
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
+- Next.js
+- React Flow
+- Tailwind CSS
+- TypeScript
+- ESLint
+- PostCSS
+- Geist font
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/docs)
+- [React Flow](https://reactflow.dev/docs/introduction/)
+- [Tailwind CSS](https://tailwindcss.com/docs)
