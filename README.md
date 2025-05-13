@@ -5,17 +5,11 @@ A tool for RPG players and storytellers, to assist in the creation and managing 
 
 ## Features
 
-- Design game worlds by uploading and annotating maps
+- Design game worlds by uploading then  annotating your interactive map
 - Create branching quest lines with a visual editor
-- Build a database of characters, locations, and items
+- Build a database of assets *(characters, locations, and items)*
 - Generate content using AI to fill in details
-- Organize everything in one place
-- Upload and manage world maps
-- Create quests (Main, Story, Side, Boss)
-- Manage game assets (NPCs, Locations, Items)
-- AI-powered content generation
-- Visual quest flow editor
-- Interactive map placement
+
 
 ## Getting Started
 
@@ -43,11 +37,11 @@ Open [http://localhost:3000](http://localhost:3000) to start.
    - Add quest details
    - Set objectives and rewards
    - Connect quests in the flow editor
-   - *`(Optional):` Link assets (NPCs, locations, items) to quests*
+   - *`(Optional)`: Link assets (NPCs, locations, items) to quests*
 
 3. **Add Assets**
    - Create NPCs, locations, and items
-   - *`(Optional):` Add descriptions and properties*
+   - *`(Optional)`: Add descriptions and properties*
    - Place on the map
    - **To add notes to an asset:**
      - Type your note in the provided field
