@@ -44,13 +44,12 @@ Open [http://localhost:3000](http://localhost:3000) to start.
    - Add quest details
    - Set objectives and rewards
    - Connect quests in the flow editor
-   - **Link assets (NPCs, locations, items) to quests**
+   - *`Link assets (NPCs, locations, items) to quests`*
 
 3. **Add Assets**
    - Create NPCs, locations, and items
    - Add descriptions and properties
    - Place on the map
-   - **Link assets to quests for richer stories**
    - **To add notes to an asset:**
      - Type your note in the provided field
      - Click "Add to Notes"
